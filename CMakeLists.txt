@@ -28,14 +28,14 @@ endif()
 
 # Clang/C2 will blow up with various parts of the standard library
 # if compiling with -std less than c++14.
-if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND
-   ("x${CMAKE_CXX_SIMULATE_ID}x" STREQUAL "xMSVCx") AND
+if(("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang") AND
+   ("x${CMAKE_CXX_SIMULATE_ID}" STREQUAL "xMSVC") AND
    ("${RANGES_CXX_STD}" STREQUAL "11"))
   set(CMAKE_CXX_STANDARD 14)
   set(RANGES_CXX_STD 14)
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++${RANGES_CXX_STD} -ftemplate-backtrace-limit=0")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything -Werror -pedantic-errors")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat -Wno-c++98-compat-pedantic")
@@ -62,6 +62,8 @@ elseif(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
   set(CMAKE_CXX_FLAGS_DEBUG "-O0 -fno-inline -g3 -fstack-protector-all")
   set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -g0 -DNDEBUG")
+elseif("x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xMSVC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /d1permissive-")
 # else()
 #   message(FATAL_ERROR "Unknown compiler. Good luck!")
 endif()
