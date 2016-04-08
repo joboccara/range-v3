@@ -463,8 +463,13 @@ namespace meta
                 using type = std::false_type;
             };
 
+            // is_callable_helper_ is a separate template to
+            // workaround FIXME(unreported) C1XX bug.
+            template <class T>
+            using is_callable_helper_ = quote<T::template invoke>;
+
             template <typename T>
-            struct is_callable_<T, void_<quote<T::template invoke>>>
+            struct is_callable_<T, void_<is_callable_helper_<T>>>
             {
                 using type = std::true_type;
             };
