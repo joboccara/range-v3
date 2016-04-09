@@ -2523,14 +2523,14 @@ namespace meta
             template <typename As, typename Ts>
             using substitutions_ = push_back<
                 join<transform<
-                    concat<As, repeat_n_c<size<Ts>{} + 2 - size<As>{}, back<As>>>,
+                    concat<As, repeat_n_c<size<Ts>::value + 2 - size<As>::value, back<As>>>,
                     concat<Ts, repeat_n_c<2, back<As>>>,
-                    bind_back<quote_trait<subst1_>, back<As>, drop_c<Ts, size<As>{} - 2>>>>,
+                    bind_back<quote_trait<subst1_>, back<As>, drop_c<Ts, size<As>::value - 2>>>>,
                 list<back<As>>>;
 
             template <typename As, typename Ts>
             using substitutions =
-                invoke<if_c<(size<Ts>{} + 2 >= size<As>{}), quote<substitutions_>>, As, Ts>;
+                invoke<if_c<(size<Ts>::value + 2 >= size<As>::value), quote<substitutions_>>, As, Ts>;
 
             template <typename T>
             struct is_vararg_ : std::false_type
@@ -2726,7 +2726,7 @@ namespace meta
                 struct thunk
                 {
                     template <typename S, typename R = _t<impl<back<Tags>, S>>>
-                    using invoke = if_c<size<R>{} == 1, front<R>>;
+                    using invoke = if_c<size<R>::value == 1, front<R>>;
                 };
 
             public:
