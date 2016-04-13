@@ -501,9 +501,8 @@ namespace ranges
 
             struct Destructible
             {
-                template<typename T,
-                    meta::if_<std::is_object<T>, int> = 0>
-                auto requires_(T && t, T* const p = nullptr) -> decltype(
+                template<typename T>
+                auto requires2_(T && t, T* const p = nullptr) -> decltype(
                     concepts::valid_expr(
                         ((void)t.~T(), 42),
                         concepts::is_true(std::is_nothrow_destructible<T>()),
@@ -512,6 +511,19 @@ namespace ranges
                         ((void)delete p, 42),
                         ((void)delete[] p, 42)
                     ));
+
+                template<typename T>
+                struct MustBeComplete {
+                    static_assert(sizeof(T) > 0, "Concept check for incomplete type T.");
+                    using type = T;
+                };
+
+                template<typename T,
+                    typename U = meta::_t<meta::if_c<
+                        std::is_object<T>::value && !std::is_array<T>::value, MustBeComplete<T>>>>
+                auto requires_(T &&) -> decltype(
+                    std::declval<Destructible&>().requires2_<U>(std::declval<U>())
+                );
             };
 
             /// \cond

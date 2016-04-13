@@ -61,8 +61,6 @@ struct IntComparable
     friend bool operator>=(IntComparable, int);
 };
 
-struct incomplete;
-
 template <class T, class...Us>
 using ConstructibleObject = ranges::concepts::models<ranges::concepts::ConstructibleObject, T, Us...>;
 template <class T, class...Us>
@@ -82,7 +80,11 @@ static_assert(!ranges::Destructible<int(&)[2]>(), "");
 static_assert(ranges::Destructible<moveonly>(), "");
 static_assert(ranges::Destructible<nonmovable>(), "");
 static_assert(!ranges::Destructible<NotDestructible>(), "");
+#if 0
+// Ill-formed (hard error)
+struct incomplete;
 static_assert(!ranges::Destructible<incomplete>(), "");
+#endif
 
 static_assert(ranges::Constructible<int>(), "");
 static_assert(ranges::Constructible<int const>(), "");
