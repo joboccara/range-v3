@@ -26,6 +26,19 @@ namespace ranges
 {
     inline namespace v3
     {
+        /// \cond
+        namespace detail
+        {
+#if RANGES_CXX_LIB_IS_FINAL
+            template <class T>
+            using is_final = std::is_final<T>;
+#else
+            template <class>
+            using is_final = std::false_type;
+#endif
+        }
+        /// \endcond
+      
         /// \addtogroup group-utility Utility
         /// @{
         ///
@@ -129,116 +142,89 @@ namespace ranges
         static_assert(std::is_trivial<constant<int, 0>>::value, "Expected constant to be trivial");
 
         template<typename Element, typename Tag = Element,
-            bool Empty = std::is_empty<Element>::value &&
-#if RANGES_CXX_LIB_IS_FINAL
-                         !std::is_final<Element>::value>
-#else
-                         true>
-#endif
+            bool Empty = std::is_empty<Element>::value && !detail::is_final<Element>::value>
         struct box
         {
             Element value;
 
-            CONCEPT_REQUIRES(DefaultConstructible<Element>())
-            constexpr box()
-              : value{}
+            template<typename... Args,
+                CONCEPT_REQUIRES_(Constructible<Element, Args...>())>
+            constexpr explicit box(Args &&... args)
+              : value(detail::forward<Args>(args)...)
             {}
-
-            template<typename E,
-                CONCEPT_REQUIRES_(Constructible<Element, E &&>())>
-            constexpr explicit box(E && e)
-              : value(detail::forward<E>(e))
-            {}
+            Element &get() & noexcept
+            {
+                return value;
+            }
+            Element const &get() const& noexcept
+            {
+                return value;
+            }
+            Element &&get() && noexcept
+            {
+                return value;
+            }
         };
 
         template<typename Element, typename Tag>
         struct box<Element, Tag, true>
           : Element
         {
-            CONCEPT_REQUIRES(DefaultConstructible<Element>())
-            constexpr box()
-              : Element{}
+            template<typename... Args,
+                CONCEPT_REQUIRES_(Constructible<Element, Args...>())>
+            constexpr explicit box(Args &&... args)
+              : Element(detail::forward<Args>(args)...)
             {}
-
-            template<typename E,
-                CONCEPT_REQUIRES_(Constructible<Element, E &&>())>
-            constexpr explicit box(E && e)
-              : Element(detail::forward<E>(e))
-            {}
+            Element &get() & noexcept
+            {
+                return static_cast<Element &>(*this);
+            }
+            Element const &get() const& noexcept
+            {
+                return static_cast<Element const&>(*this);
+            }
+            Element &&get() && noexcept
+            {
+                return static_cast<Element &&>(*this);
+            }
         };
 
         // Get by tag type
-        template<typename Tag, typename Element>
-        constexpr Element & get(box<Element, Tag, false> & b)
+        template<typename Tag, typename Element, bool B>
+        constexpr Element & get(box<Element, Tag, B> & b) noexcept
         {
-            return b.value;
+            return b.get();
         }
 
-        template<typename Tag, typename Element>
-        constexpr Element const & get(box<Element, Tag, false> const & b)
+        template<typename Tag, typename Element, bool B>
+        constexpr Element const & get(box<Element, Tag, B> const & b) noexcept
         {
-            return b.value;
+            return b.get();
         }
 
-        template<typename Tag, typename Element>
-        constexpr Element && get(box<Element, Tag, false> && b)
+        template<typename Tag, typename Element, bool B>
+        constexpr Element && get(box<Element, Tag, B> && b) noexcept
         {
-            return detail::move(b).value;
-        }
-
-        template<typename Tag, typename Element>
-        constexpr Element & get(box<Element, Tag, true> & b)
-        {
-            return b;
-        }
-
-        template<typename Tag, typename Element>
-        constexpr Element const & get(box<Element, Tag, true> const & b)
-        {
-            return b;
-        }
-
-        template<typename Tag, typename Element>
-        constexpr Element && get(box<Element, Tag, true> && b)
-        {
-            return detail::move(b);
+            return detail::move(b).get();
         }
 
         // Get by index
-        template<std::size_t I, typename Element>
-        constexpr Element & get(box<Element, std::integral_constant<std::size_t, I>, false> & b)
+        template<std::size_t I, typename Element, bool B>
+        constexpr Element & get(box<Element, meta::size_t<I>, B> & b) noexcept
         {
-            return b.value;
+            return b.get();
         }
 
-        template<std::size_t I, typename Element>
-        constexpr Element const & get(box<Element, std::integral_constant<std::size_t, I>, false> const & b)
+        template<std::size_t I, typename Element, bool B>
+        constexpr Element const & get(box<Element, meta::size_t<I>, B> const & b) noexcept
         {
-            return b.value;
+            return b.get();
         }
 
-        template<std::size_t I, typename Element>
-        constexpr Element && get(box<Element, std::integral_constant<std::size_t, I>, false> && b)
+        template<std::size_t I, typename Element, bool B>
+        constexpr Element && get(box<Element, meta::size_t<I>, B> && b) noexcept
         {
-            return detail::move(b).value;
-        }
-
-        template<std::size_t I, typename Element>
-        constexpr Element & get(box<Element, std::integral_constant<std::size_t, I>, true> & b)
-        {
-            return b;
-        }
-
-        template<std::size_t I, typename Element>
-        constexpr Element const & get(box<Element, std::integral_constant<std::size_t, I>, true> const & b)
-        {
-            return b;
-        }
-
-        template<std::size_t I, typename Element>
-        constexpr Element && get(box<Element, std::integral_constant<std::size_t, I>, true> && b)
-        {
-            return detail::move(b);
+            return detail::move(b).get();
         }
         /// @}
     }

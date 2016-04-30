@@ -18,6 +18,7 @@
 #include <type_traits>
 #include <meta/meta.hpp>
 #include <range/v3/range_fwd.hpp>
+#include <range/v3/utility/box.hpp>
 #include <range/v3/utility/concepts.hpp>
 #include <range/v3/utility/functional.hpp>
 #include <range/v3/utility/static_const.hpp>
@@ -26,94 +27,72 @@ namespace ranges
 {
     inline namespace v3
     {
-        /// \cond
-        namespace detail
-        {
-            template<typename T, typename = void>
-            struct first_base
-            {
-                T first;
-                first_base() = default;
-                template<typename U,
-                    meta::if_<std::is_constructible<T, U &&>, int> = 0>
-                constexpr explicit first_base(U && u)
-                  : first((U &&) u)
-                {}
-            };
-
-            template<typename T>
-            struct first_base<T, meta::if_<meta::and_<std::is_empty<T>, std::is_trivial<T>>>>
-            {
-                static T first;
-                first_base() = default;
-                template<typename U,
-                    meta::if_<std::is_constructible<T, U &&>, int> = 0>
-                constexpr explicit first_base(U &&)
-                {}
-            };
-
-            template<typename T>
-            T first_base<T, meta::if_<meta::and_<std::is_empty<T>, std::is_trivial<T>>>>::first{};
-
-            template<typename T, typename Enable = void>
-            struct second_base
-            {
-                T second;
-                second_base() = default;
-                template<typename U,
-                    meta::if_<std::is_constructible<T, U &&>, int> = 0>
-                constexpr explicit second_base(U && u)
-                  : second((U &&) u)
-                {}
-            };
-
-            template<typename T>
-            struct second_base<T, meta::if_<meta::and_<std::is_empty<T>, std::is_trivial<T>>>>
-            {
-                static T second;
-                second_base() = default;
-                template<typename U,
-                    meta::if_<std::is_constructible<T, U &&>, int> = 0>
-                constexpr explicit second_base(U &&)
-                {}
-            };
-
-            template<typename T>
-            T second_base<T, meta::if_<meta::and_<std::is_empty<T>, std::is_trivial<T>>>>::second{};
-        }
-        /// \endcond
-
         template<typename First, typename Second>
         struct compressed_pair
-          : private detail::first_base<First>
-          , private detail::second_base<Second>
+          : box<First, meta::size_t<0>>
+          , box<Second, meta::size_t<1>>
         {
+        private:
+            using first_base = box<First, meta::size_t<0>>;
+            using second_base = box<Second, meta::size_t<1>>;
+        public:
             using first_type = First;
             using second_type = Second;
-            using detail::first_base<First>::first;
-            using detail::second_base<Second>::second;
 
-            compressed_pair() = default;
+            CONCEPT_REQUIRES(DefaultConstructible<First>() &&
+                DefaultConstructible<Second>())
+            constexpr compressed_pair()
+                noexcept(std::is_nothrow_default_constructible<First>() &&
+                         std::is_nothrow_default_constructible<Second>())
+              : first_base{}
+              , second_base{}
+            {}
 
+            CONCEPT_REQUIRES(MoveConstructible<First>() &&
+                MoveConstructible<Second>())
             constexpr compressed_pair(First f, Second s)
-              : detail::first_base<First>{(First &&) f}
-              , detail::second_base<Second>{(Second &&) s}
+                noexcept(std::is_nothrow_move_constructible<First>() &&
+                         std::is_nothrow_move_constructible<Second>())
+              : first_base{(First &&) f}
+              , second_base{(Second &&) s}
             {}
 
             template<typename F, typename S,
-                meta::if_<meta::and_<std::is_constructible<First, F &&>,
-                                     std::is_constructible<Second, S &&>>, int> = 0>
+                CONCEPT_REQUIRES_(Constructible<First, F>() &&
+                    Constructible<Second, S>())>
             constexpr compressed_pair(F && f, S && s)
-              : detail::first_base<First>{(F &&) f}
-              , detail::second_base<Second>{(S &&) s}
+                noexcept(std::is_nothrow_constructible<First, F>() &&
+                         std::is_nothrow_constructible<Second, S>())
+              : first_base{(F &&) f}
+              , second_base{(S &&) s}
             {}
 
             template<typename F, typename S,
-                meta::if_<meta::and_<std::is_constructible<F, First const &>,
-                                     std::is_constructible<S, Second const &>>, int> = 0>
+                CONCEPT_REQUIRES_(CopyConstructible<First>() &&
+                    CopyConstructible<Second>())>
             constexpr operator std::pair<F, S> () const
             {
-                return std::pair<F, S>{first, second};
+                return std::pair<F, S>{first(), second()};
+            }
+
+            First &first() & noexcept {
+                return ranges::get<0>(*this);
+            }
+            First const &first() const& noexcept {
+                return ranges::get<0>(*this);
+            }
+            First &&first() && noexcept {
+                return ranges::get<0>(detail::move(*this));
+            }
+
+            Second &second() & noexcept {
+                return ranges::get<1>(*this);
+            }
+            Second const &second() const& noexcept {
+                return ranges::get<1>(*this);
+            }
+            Second &&second() && noexcept {
+                return ranges::get<1>(detail::move(*this));
             }
         };
 
@@ -133,61 +112,6 @@ namespace ranges
         namespace
         {
             constexpr auto&& make_compressed_pair = static_const<make_compressed_pair_fn>::value;
-        }
-
-        /// \brief Tuple-like access of `compressed_pair`
-        // TODO Switch to variable template when available
-        template<std::size_t I, typename First, typename Second,
-            CONCEPT_REQUIRES_(I == 0)>
-        constexpr auto get(compressed_pair<First, Second> & p) ->
-            decltype((p.first))
-        {
-            return p.first;
-        }
-
-        /// \overload
-        template<std::size_t I, typename First, typename Second,
-            CONCEPT_REQUIRES_(I == 0)>
-        constexpr auto get(compressed_pair<First, Second> const & p) ->
-            decltype((p.first))
-        {
-            return p.first;
-        }
-
-        /// \overload
-        template<std::size_t I, typename First, typename Second,
-            CONCEPT_REQUIRES_(I == 0)>
-        constexpr auto get(compressed_pair<First, Second> && p) ->
-            decltype((detail::move(p).first))
-        {
-            return detail::move(p).first;
-        }
-
-        /// \overload
-        template<std::size_t I, typename First, typename Second,
-            CONCEPT_REQUIRES_(I == 1)>
-        constexpr auto get(compressed_pair<First, Second> & p) ->
-            decltype((p.second))
-        {
-            return p.second;
-        }
-
-        /// \overload
-        template<std::size_t I, typename First, typename Second,
-            CONCEPT_REQUIRES_(I == 1)>
-        constexpr auto get(compressed_pair<First, Second> const & p) ->
-            decltype((p.second))
-        {
-            return p.second;
-        }
-
-        /// \overload
-        template<std::size_t I, typename First, typename Second,
-            CONCEPT_REQUIRES_(I == 1)>
-        constexpr auto get(compressed_pair<First, Second> && p) ->
-            decltype((detail::move(p).second))
-        {
-            return detail::move(p).second;
         }
     }
 }

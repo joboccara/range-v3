@@ -19,6 +19,7 @@
 #include <range/v3/distance.hpp>
 #include <range/v3/view_facade.hpp>
 #include <range/v3/range_traits.hpp>
+#include <range/v3/utility/box.hpp>
 #include <range/v3/utility/concepts.hpp>
 #include <range/v3/utility/iterator_concepts.hpp>
 #include <range/v3/utility/iterator_traits.hpp>
@@ -153,13 +154,16 @@ namespace ranges
         // adaptor that customizes behavior.
         template<typename BaseIter, typename Adapt>
         struct adaptor_cursor
-          : private compressed_pair<BaseIter, Adapt>
+          : private box<BaseIter, meta::size_t<0>>
+          , private box<Adapt, meta::size_t<1>>
           , private detail::adaptor_value_type_<BaseIter, Adapt>
         {
         private:
             template<typename BaseSent, typename SentAdapt>
             friend struct adaptor_sentinel;
             friend range_access;
+            using iter_base_t = box<BaseIter, meta::size_t<0>>;
+            using adapt_base_t = box<Adapt, meta::size_t<1>>;
             using single_pass = meta::or_<
                 range_access::single_pass_t<Adapt>,
                 SinglePass<BaseIter>>;
@@ -172,42 +176,39 @@ namespace ranges
                 // the underlying iterator.
                 BaseIter base() const
                 {
-                    return this->get().first;
+                    return this->get().iter_base_t::get();
                 }
             };
 
-            using compressed_pair<BaseIter, Adapt>::first;
-            using compressed_pair<BaseIter, Adapt>::second;
-
             template<typename A = Adapt,
-                typename R = decltype(std::declval<A>().get(first))>
+                typename R = decltype(std::declval<A const&>().get(std::declval<BaseIter const&>()))>
             R get() const
-                noexcept(noexcept(R(std::declval<A>().get(first))))
+                noexcept(noexcept(R(std::declval<A const&>().get(std::declval<BaseIter const&>()))))
             {
                 using V = range_access::cursor_value_t<adaptor_cursor>;
                 static_assert(
                     CommonReference<R &&, V &>(),
                     "In your adaptor, you've specified a value type that does not "
                     "share a common reference type with the return type of current.");
-                return second.get(first);
+                return adapt_base_t::get().get(iter_base_t::get());
             }
             template<typename A = Adapt,
-                typename R = decltype(std::declval<A>().next(first))>
+                typename R = decltype(std::declval<A&>().next(std::declval<BaseIter&>()))>
             void next()
             {
-                second.next(first);
+                adapt_base_t::get().next(iter_base_t::get());
             }
             template<typename A = Adapt,
-                typename R = decltype(std::declval<A>().equal(first, first, second))>
+                typename R = decltype(std::declval<A const&>().equal(std::declval<BaseIter const&>(), std::declval<BaseIter const&>(), std::declval<Adapt const&>()))>
             bool equal_(adaptor_cursor const &that, int) const
             {
-                return second.equal(first, that.first, that.second);
+                return adapt_base_t::get().equal(iter_base_t::get(), that.iter_base_t::get(), that.adapt_base_t::get());
             }
             template<typename A = Adapt,
-                typename R = decltype(std::declval<A>().equal(first, first))>
+                typename R = decltype(std::declval<A const&>().equal(first, first))>
             bool equal_(adaptor_cursor const &that, long) const
             {
-                return second.equal(first, that.first);
+                return adapt_base_t::get().equal(first, that.first);
             }
             template<typename C = adaptor_cursor>
             auto equal(adaptor_cursor const &that) const ->
