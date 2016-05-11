@@ -742,16 +742,6 @@ namespace ranges
                         concepts::model_of<Predicate, Fun, U, T>()
                     ));
             };
-
-            struct Transform
-              : refines<RegularFunction>
-            {
-                template<typename F, typename T>
-                auto requires_(F &&, T &&) -> decltype(
-                    concepts::valid_expr(
-                        concepts::convertible_to<T>(val<F>()(val<T>()))
-                    ));
-            };
         }
 
         template<typename ...Ts>
@@ -850,9 +840,6 @@ namespace ranges
 
         template<typename Fun, typename T, typename U = T>
         using Relation = concepts::models<concepts::Relation, Fun, T, U>;
-
-        template<typename F, typename T>
-        using Transform = concepts::models<concepts::Transform, F, T>;
     }
 }
 
@@ -878,7 +865,11 @@ namespace ranges
         >::type = 0>                                                                \
     /**/
 
-#define CONCEPT_ASSERT(...) static_assert((__VA_ARGS__), "Concept check failed")
+#if RANGES_CXX_STATIC_ASSERT >= RANGES_CXX_STATIC_ASSERT_17
+#define CONCEPT_ASSERT static_assert
+#else
+#define CONCEPT_ASSERT(...) static_assert((__VA_ARGS__), "Concept check failed: " #__VA_ARGS__)
+#endif
 /// @}
 
 #define CONCEPT_ASSERT_MSG static_assert

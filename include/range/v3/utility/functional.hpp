@@ -25,7 +25,8 @@
 #include <range/v3/utility/concepts.hpp>
 #include <range/v3/utility/static_const.hpp>
 #include <range/v3/utility/compressed_pair.hpp>
-#include <range/v3/detail/disable_warnings.hpp>
+
+RANGES_DISABLE_WARNINGS
 
 namespace ranges
 {
@@ -412,8 +413,12 @@ namespace ranges
             {}
             // value_type (needs no impl)
             template<typename ...Its>
-            auto operator()(copy_tag, Its ...its) const ->
-                decltype(std::declval<BaseFn &>()(*its...));
+            [[noreturn]] auto operator()(copy_tag, Its ...) const ->
+                decltype(std::declval<BaseFn &>()(*std::declval<Its>()...))
+            {
+                RANGES_ENSURE(false);
+            }
+
             // Reference
             template<typename ...Its>
             auto operator()(Its ...its)
@@ -429,6 +434,7 @@ namespace ranges
             {
                 return base()(*its...);
             }
+
             // Rvalue reference
             template<typename ...Its>
             auto operator()(move_tag, Its ...its)
@@ -1085,16 +1091,6 @@ namespace ranges
                         concepts::model_of<Relation, function_type<Fun>, T, U>()
                     ));
             };
-
-            struct CallableTransform
-              : refines<RegularCallable>
-            {
-                template<typename Fun, typename T>
-                auto requires_(Fun&&, T&&) -> decltype(
-                    concepts::valid_expr(
-                        concepts::model_of<Transform, function_type<Fun>, T>()
-                    ));
-            };
         }
 
         template<typename Fun, typename...Args>
@@ -1108,13 +1104,10 @@ namespace ranges
 
         template<typename Fun, typename T, typename U = T>
         using CallableRelation = concepts::models<concepts::CallableRelation, Fun, T, U>;
-
-        template<typename F, typename T>
-        using CallableTransform = concepts::models<concepts::CallableTransform, F, T>;
         /// @}
     }
 }
 
-#include <range/v3/detail/re_enable_warnings.hpp>
+RANGES_RE_ENABLE_WARNINGS
 
 #endif

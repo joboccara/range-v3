@@ -215,6 +215,10 @@ matrix:
       os: linux
       addons: *clang38
 
+    - env: CLANG_VERSION=3.8 BUILD_TYPE=Release CPP=11 ASAN=Off LIBCXX=Off
+      os: linux
+      addons: *clang38
+
     # Test gcc-4.8: C++11, Build=Debug/Release, ASAN=Off
     - env: GCC_VERSION=4.8 BUILD_TYPE=Debug CPP=11 ASAN=Off LIBCXX=Off
       os: linux
@@ -230,7 +234,7 @@ matrix:
       os: linux
       addons: *gcc48
 
-    # Test gcc-4.9: C++11, Build=Debug/Release, ASAN=Off
+    # Test gcc-4.9: C++11/14, Build=Debug/Release, ASAN=Off
     - env: GCC_VERSION=4.9 BUILD_TYPE=Debug CPP=11 ASAN=Off LIBCXX=Off
       os: linux
       addons: &gcc49
@@ -245,6 +249,14 @@ matrix:
       os: linux
       addons: *gcc49
 
+    - env: GCC_VERSION=4.9 BUILD_TYPE=Debug CPP=14 ASAN=Off LIBCXX=Off
+      os: linux
+      addons: *gcc49
+
+    - env: GCC_VERSION=4.9 BUILD_TYPE=Release CPP=14 ASAN=Off LIBCXX=Off
+      os: linux
+      addons: *gcc49
+
     # Test gcc-5: C++11/14, Build=Debug/Release, ASAN=On/Off
     - env: GCC_VERSION=5 BUILD_TYPE=Debug CPP=11 ASAN=On LIBCXX=Off
       os: linux
@@ -256,9 +268,9 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
 
-    - env: GCC_VERSION=5 BUILD_TYPE=Release CPP=11 ASAN=On LIBCXX=Off
-      os: linux
-      addons: *gcc5
+    # - env: GCC_VERSION=5 BUILD_TYPE=Release CPP=11 ASAN=On LIBCXX=Off
+    #   os: linux
+    #   addons: *gcc5
 
     - env: GCC_VERSION=5 BUILD_TYPE=Debug CPP=11 ASAN=Off LIBCXX=Off
       os: linux
@@ -276,13 +288,13 @@ matrix:
     #   os: linux
     #   addons: *gcc5
 
-    # - env: GCC_VERSION=5 BUILD_TYPE=Debug CPP=14 ASAN=Off LIBCXX=Off
-    #   os: linux
-    #   addons: *gcc5
+    - env: GCC_VERSION=5 BUILD_TYPE=Debug CPP=14 ASAN=Off LIBCXX=Off CXX_FLAGS="-DRANGES_CXX_CONSTEXPR=RANGES_CXX_CONSTEXPR_11"
+      os: linux
+      addons: *gcc5
 
-    # - env: GCC_VERSION=5 BUILD_TYPE=Release CPP=14 ASAN=Off LIBCXX=Off
-    #   os: linux
-    #   addons: *gcc5
+    - env: GCC_VERSION=5 BUILD_TYPE=Release CPP=14 ASAN=Off LIBCXX=Off CXX_FLAGS="-DRANGES_CXX_CONSTEXPR=RANGES_CXX_CONSTEXPR_11"
+      os: linux
+      addons: *gcc5
 
 # Install dependencies
 before_install:
@@ -306,15 +318,12 @@ install:
   # Workaround for valgrind bug: https://bugs.kde.org/show_bug.cgi?id=326469.
   # It is fixed in valgrind 3.10 so this won't be necessary if someone
   # replaces the current valgrind (3.7) with valgrind-3.10
-  - sed -i 's/march=native/msse4.2/' CMakeLists.txt
+  - if [ "$BUILD_TYPE" == "Release" ] && [ "$ASAN" == "Off" ]; then sed -i 's/march=native/msse4.2/' CMakeLists.txt; fi
 
-  - if [ ! -d build ]; then mkdir build; fi
+  - mkdir -p build
   - cd build
-  - export CXX_FLAGS=""
-  - export CXX_LINKER_FLAGS=""
-  - if [ -z "$BUILD_TYPE" ]; then export BUILD_TYPE=Release; fi
-  - if [ -n "$CLANG_VERSION" -a "$ASAN" == "On" ]; then export CXX_FLAGS="${CXX_FLAGS} -fsanitize=address,undefined,integer -fno-omit-frame-pointer -fno-sanitize=unsigned-integer-overflow"; fi
-  - if [ -n "$GCC_VERSION" -a "$ASAN" == "On" ]; then export CXX_FLAGS="${CXX_FLAGS} -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
+  - if [ -n "$CLANG_VERSION" -a "$ASAN" == "On" ]; then CXX_FLAGS="${CXX_FLAGS} -fsanitize=address,undefined,integer -fno-omit-frame-pointer -fno-sanitize=unsigned-integer-overflow"; fi
+  - if [ -n "$GCC_VERSION" -a "$ASAN" == "On" ]; then CXX_FLAGS="${CXX_FLAGS} -fsanitize=address,undefined -fno-omit-frame-pointer"; fi
   - if [ -n "$CLANG_VERSION" ]; then CXX_FLAGS="${CXX_FLAGS} -D__extern_always_inline=inline"; fi
   - if [ "$LIBCXX" == "On" ]; then CXX_FLAGS="${CXX_FLAGS} -stdlib=libc++ -I/usr/include/c++/v1/"; fi
   - if [ "$LIBCXX" == "On" ]; then CXX_LINKER_FLAGS="${CXX_FLAGS} -L/usr/lib/ -lc++"; fi
@@ -322,11 +331,9 @@ install:
   - make VERBOSE=1
 
 script:
-  - ctest -VV
-  # Valgrind runs for clang release builds only,
-  # it fails when using gcc-4.9 + libstdc++-4.9.
-  # - if [ "$BUILD_TYPE" == "Release" ] && [ ! -n "$GCC_VERSION" ]; then ctest -VV -D ExperimentalMemCheck; fi
-  - if [ "$BUILD_TYPE" == "Release" ] && [ "$ASAN" == "Off" ]; then ctest -VV -D ExperimentalMemCheck; fi
+  # Only enable valgrind for non-ASAN Release builds (keep this in sync with line 309)
+  - if [ "$BUILD_TYPE" == "Release" ] && [ "$ASAN" == "Off" ]; then CTEST_FLAGS="-D ExperimentalMemCheck"; fi
+  - ctest -VV ${CTEST_FLAGS}
 
 notifications:
   email: false

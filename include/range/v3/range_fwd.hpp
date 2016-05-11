@@ -254,23 +254,37 @@ namespace ranges
             void ignore_unused(Ts &&...)
             {}
 
-#if !defined(__GLIBCXX__)
-            template<typename T>
-            using is_trivially_copy_assignable = std::is_trivially_copy_assignable<T>;
+            #if defined(__clang__) && !defined(_LIBCPP_VERSION)
+                template <class T, class Arg = T>
+                struct is_trivially_copy_assignable
+                  : meta::bool_<__is_trivially_assignable(T &, Arg const&)>
+                {};
+                template <class T, class Arg = T>
+                struct is_trivially_move_assignable
+                  : meta::bool_<__is_trivially_assignable(T &, Arg &&)>
+                {};  
+             #elif defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
+                template<typename T>
+                using is_trivially_copy_assignable = std::is_trivial<T>;
 
-            template<typename T>
-            using is_trivially_move_assignable = std::is_trivially_move_assignable<T>;
-#else
-            template<typename T>
-            struct is_trivially_copy_assignable
-              : std::is_trivial<T>
-            {};
+                template<typename T>
+                using is_trivially_move_assignable = std::is_trivial<T>;
+            #else
+                using std::is_trivially_copy_assignable;
+                using std::is_trivially_move_assignable;
+            #endif
 
-            template<typename T>
-            struct is_trivially_move_assignable
-              : std::is_trivial<T>
-            {};
-#endif
+            #if RANGES_CXX_LIB_IS_FINAL > 0
+                #if defined(__clang__) && !defined(_LIBCPP_VERSION)
+                    template<typename T>
+                    using is_final = meta::bool_<__is_final(T)>;
+                #else
+                    using std::is_final;          
+                #endif
+            #else 
+                template<typename T>
+                using is_final = std::false_type;
+            #endif 
 
             template<typename T>
             struct remove_rvalue_reference
@@ -391,8 +405,6 @@ namespace ranges
 
         template<typename I, typename S = I>
         struct sized_iterator_range;
-
-        struct make_range_fn;
 
         template<typename T, bool RValue = false>
         struct reference_wrapper;

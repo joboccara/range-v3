@@ -26,7 +26,7 @@
 #include <range/v3/view/view.hpp>
 #include <range/v3/view/all.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+RANGES_DISABLE_WARNINGS
 
 namespace ranges
 {
@@ -48,8 +48,12 @@ namespace ranges
                 {}
 
                 template<typename I>
+                [[noreturn]]
                 common_type_t<decay_t<unwrap_reference_t<Val const &>>, iterator_value_t<I>> &
-                operator()(copy_tag, I const &i) const;
+                operator()(copy_tag, I const &) const
+                {
+                    RANGES_ENSURE(false);
+                }
 
                 template<typename I,
                     CONCEPT_REQUIRES_(!Callable<Pred const, iterator_reference_t<I>>())>
@@ -167,6 +171,6 @@ namespace ranges
     }
 }
 
-#include <range/v3/detail/re_enable_warnings.hpp>
+RANGES_RE_ENABLE_WARNINGS
 
 #endif
