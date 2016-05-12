@@ -29,7 +29,6 @@
 #include "../simple_test.hpp"
 #include "../test_utils.hpp"
 
-
 int main()
 {
     using namespace ranges;
@@ -85,7 +84,7 @@ int main()
 
     auto rnd_rng = view::zip(vi, vs);
     using Ref = range_reference_t<decltype(rnd_rng)>;
-    static_assert(std::is_same<Ref, common_pair<int &,std::string const &>>::value, "");
+    CONCEPT_ASSERT(std::is_same<Ref, common_pair<int &,std::string const &>>::value);
     ::models<concepts::BoundedView>(rnd_rng);
     ::models<concepts::SizedView>(rnd_rng);
     ::models<concepts::RandomAccessIterator>(begin(rnd_rng));
@@ -196,12 +195,18 @@ int main()
 
     // Test for noexcept iter_move
     {
-        static_assert(noexcept(std::declval<std::unique_ptr<int>&>() = std::declval<std::unique_ptr<int>&&>()), "");
         std::unique_ptr<int> rg1[10], rg2[10];
         auto x = view::zip(rg1, rg2);
-        std::pair<std::unique_ptr<int>, std::unique_ptr<int>> p = iter_move(x.begin());
         auto it = x.begin();
-        static_assert(noexcept(iter_move(it)), "");
+        CONCEPT_ASSERT(noexcept(std::declval<std::unique_ptr<int>&>() = std::declval<std::unique_ptr<int>&&>()));
+        CONCEPT_ASSERT(noexcept(iter_move(it)));
+        rg1[0] = std::unique_ptr<int>(new int{42});
+        rg2[0] = std::unique_ptr<int>(new int{13});
+        std::pair<std::unique_ptr<int>, std::unique_ptr<int>> p = iter_move(it);
+        CHECK(!rg1[0]);
+        CHECK(!rg2[0]);
+        CHECK((p.first && *p.first == 42));
+        CHECK((p.second && *p.second == 13));
     }
 
     // Really a test for common_iterator's iter_move, but this is a good place for it.
@@ -213,7 +218,7 @@ int main()
         auto y = x | view::bounded;
         std::pair<std::unique_ptr<int>, std::unique_ptr<int>> p = iter_move(y.begin());
         auto it = x.begin();
-        static_assert(noexcept(iter_move(it)), "");
+        CONCEPT_ASSERT(noexcept(iter_move(it)));
     }
 
     // Regression test for #439.

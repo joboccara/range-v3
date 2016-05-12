@@ -51,15 +51,14 @@ namespace ranges
                 {
                     return rng_->cached();
                 }
+                Val &&move() const noexcept
+                {
+                    return detail::move(rng_->cached());
+                }
                 bool done() const
                 {
                     return !*rng_->sin_;
                 }
-                Val && move() const noexcept
-                {
-                    return detail::move(rng_->cached());
-                }
-
             };
             void next()
             {

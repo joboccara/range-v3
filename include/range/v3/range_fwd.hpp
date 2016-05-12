@@ -67,31 +67,12 @@ namespace ranges
         /// \cond
         namespace adl_begin_end_detail
         {
-            struct begin_fn;
-            struct end_fn;
-            struct cbegin_fn;
-            struct cend_fn;
             struct rbegin_fn;
             struct rend_fn;
-            struct crbegin_fn;
-            struct crend_fn;
         }
 
-        using adl_begin_end_detail::begin_fn;
-        using adl_begin_end_detail::end_fn;
-        using adl_begin_end_detail::cbegin_fn;
-        using adl_begin_end_detail::cend_fn;
         using adl_begin_end_detail::rbegin_fn;
         using adl_begin_end_detail::rend_fn;
-        using adl_begin_end_detail::crbegin_fn;
-        using adl_begin_end_detail::crend_fn;
-
-        namespace adl_size_detail
-        {
-            struct size_fn;
-        }
-
-        using adl_size_detail::size_fn;
         /// \endcond
 
         template<typename...>
@@ -239,6 +220,13 @@ namespace ranges
             template<typename T>
             using decay_t = meta::_t<std::decay<T>>;
 
+            template<typename T>
+            constexpr auto decay_copy(T && t)
+            RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+            (
+                static_cast<decay_t<T>>(static_cast<T &&>(t))
+            )
+
             template<typename T, typename R = meta::_t<std::remove_reference<T>>>
             using as_ref_t =
                 meta::_t<std::add_lvalue_reference<meta::_t<std::remove_const<R>>>>;
@@ -337,6 +325,12 @@ namespace ranges
         struct end_tag {};
         struct copy_tag {};
         struct move_tag {};
+
+        template<unsigned N> struct priority_tag : priority_tag<N - 1> {};
+        template<> struct priority_tag<0> {};
+
+        template<template <class...> class Trait, typename T, typename D = detail::decay_t<T>>
+        using if_decayed = meta::if_<Trait<D>, D>;
 
         template<typename T>
         using uncvref_t =

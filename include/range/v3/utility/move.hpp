@@ -63,6 +63,7 @@ namespace ranges
         /// \cond
         namespace adl_move_detail
         {
+            void indirect_move(); // one-phase name lookup guard
             // TODO: investigate the breakage when these are made constexpr.
             // (Results in ODR-use of projected_readable::operator*)
 

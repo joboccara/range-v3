@@ -2,6 +2,7 @@
 // Range v3 library
 //
 //  Copyright Eric Niebler 2013-2014
+//  Copyright Casey Carter 2016
 //
 //  Use, modification and distribution is subject to the
 //  Boost Software License, Version 1.0. (See accompanying
@@ -28,36 +29,131 @@ namespace ranges
     inline namespace v3
     {
         /// \cond
+        namespace begin_detail
+        {
+            void begin(); // one-phase name lookup guard
+
+            class fn
+            {
+                template<typename Rng>
+                static constexpr auto impl(Rng& rng, priority_tag<0>)
+                    noexcept(noexcept(detail::decay_copy(begin(rng)))) ->
+                    if_decayed<Iterator, decltype(begin(rng))>
+                {
+                    return begin(rng);
+                }
+                template<typename Rng>
+                static constexpr auto impl(Rng& rng, priority_tag<1>)
+                    noexcept(noexcept(detail::decay_copy(rng.begin()))) ->
+                    if_decayed<Iterator, decltype(rng.begin())>
+                {
+                    return rng.begin();
+                }
+                template<typename T, std::size_t N>
+                static constexpr T* impl(T (&t)[N], priority_tag<1>) noexcept
+                {
+                    return t + 0;
+                }
+                template<typename Rng, typename = meta::if_c<!std::is_lvalue_reference<Rng>::value>>
+                RANGES_DEPRECATED("begin(Rvalue) is deprecated")
+                static constexpr auto impl(Rng&& rng, priority_tag<2>)
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(detail::as_const(rng), priority_tag<1>{})
+                )
+                // Extension: reference wrapped ranges are ranges
+                template<typename T>
+                static constexpr auto impl(std::reference_wrapper<T> rw, priority_tag<3>)
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(rw.get(), priority_tag<3>{})
+                )
+                template<typename T, bool B>
+                static constexpr auto impl(ranges::reference_wrapper<T, B> rw, priority_tag<3>)
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(rw.get(), priority_tag<3>{})
+                )
+            public:
+                template<typename Rng>
+                constexpr auto operator()(Rng&& rng) const
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(static_cast<Rng &&>(rng), priority_tag<3>{})
+                )
+            };
+        }
+        /// \endcond
+
+        /// \ingroup group-core
+        /// \return The result of an unqualified call to the `begin` free function
+        RANGES_INLINE_VARIABLE(begin_detail::fn, begin)
+
+        /// \cond
+        namespace end_detail
+        {
+            void end(); // one-phase name lookup guard
+
+            class fn
+            {
+                // TODO: constrain return type
+                template<typename Rng>
+                static constexpr auto impl(Rng& rng, priority_tag<0>)
+                    noexcept(noexcept(detail::decay_copy(end(rng)))) ->
+                    detail::decay_t<decltype(end(rng))>
+                {
+                    return end(rng);
+                }
+                template<typename Rng>
+                static constexpr auto impl(Rng& rng, priority_tag<1>)
+                    noexcept(noexcept(detail::decay_copy(rng.end()))) ->
+                    detail::decay_t<decltype(rng.end())>
+                {
+                    return rng.end();
+                }
+                template<typename T, std::size_t N>
+                static constexpr T* impl(T (&t)[N], priority_tag<1>) noexcept
+                {
+                    return t + N;
+                }
+                template<typename Rng, typename = meta::if_c<!std::is_lvalue_reference<Rng>::value>>
+                RANGES_DEPRECATED("end(Rvalue) is deprecated")
+                static constexpr auto impl(Rng&& rng, priority_tag<2>)
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(detail::as_const(rng), priority_tag<1>{})
+                )
+                // Extension: reference wrapped ranges are ranges
+                template<typename T>
+                static constexpr auto impl(std::reference_wrapper<T> rw, priority_tag<3>)
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(rw.get(), priority_tag<3>{})
+                )
+                template<typename T, bool B>
+                static constexpr auto impl(ranges::reference_wrapper<T, B> rw, priority_tag<3>)
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(rw.get(), priority_tag<3>{})
+                )
+            public:
+                template<typename Rng>
+                constexpr auto operator()(Rng&& rng) const
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    fn::impl(static_cast<Rng &&>(rng), priority_tag<3>{})
+                )
+            };
+        }
+        /// \endcond
+
+        /// \ingroup group-core
+        /// \return The result of an unqualified call to the `end` free function
+        RANGES_INLINE_VARIABLE(end_detail::fn, end)
+
+        /// \cond
         namespace adl_begin_end_detail
         {
-            using std::begin;
-            using std::end;
-
-            // A reference-wrapped Range is an Range
-            template<typename T>
-            auto begin(std::reference_wrapper<T> ref) -> decltype(begin(ref.get()))
-            {
-                return begin(ref.get());
-            }
-
-            template<typename T>
-            auto end(std::reference_wrapper<T> ref) -> decltype(end(ref.get()))
-            {
-                return end(ref.get());
-            }
-
-            template<typename T, bool RValue>
-            auto begin(ranges::reference_wrapper<T, RValue> ref) -> decltype(begin(ref.get()))
-            {
-                return begin(ref.get());
-            }
-
-            template<typename T, bool RValue>
-            auto end(ranges::reference_wrapper<T, RValue> ref) -> decltype(end(ref.get()))
-            {
-                return end(ref.get());
-            }
-
             template<typename T>
             auto rbegin(std::reference_wrapper<T> ref) -> decltype(rbegin(ref.get()))
             {
@@ -82,88 +178,31 @@ namespace ranges
                 return rend(ref.get());
             }
 
-            struct begin_fn
-            {
-            private:
-                template<typename Rng>
-                static constexpr auto impl(Rng && rng, long)
-                    noexcept(noexcept(begin(static_cast<Rng &&>(rng)))) ->
-                    decltype(begin(static_cast<Rng &&>(rng)))
-                {
-                    return begin(static_cast<Rng &&>(rng));
-                }
-                template<typename Rng,
-                    meta::if_c<std::is_lvalue_reference<Rng>::value, int> = 0>
-                static constexpr auto impl(Rng && rng, int)
-                    noexcept(noexcept(rng.begin())) ->
-                    decltype(rng.begin())
-                {
-                    return rng.begin();
-                }
-            public:
-                template<typename Rng>
-                constexpr auto operator()(Rng && rng) const
-                    noexcept(noexcept(begin_fn::impl(static_cast<Rng &&>(rng), 0))) ->
-                    detail::decay_t<decltype(begin_fn::impl(static_cast<Rng &&>(rng), 0))>
-                {
-                    return begin_fn::impl(static_cast<Rng &&>(rng), 0);
-                }
-            };
-
-            struct end_fn
-            {
-            private:
-                template<typename Rng>
-                static constexpr auto impl(Rng && rng, long)
-                    noexcept(noexcept(end(static_cast<Rng &&>(rng)))) ->
-                    decltype(end(static_cast<Rng &&>(rng)))
-                {
-                    return end(static_cast<Rng &&>(rng));
-                }
-                template<typename Rng,
-                    meta::if_c<std::is_lvalue_reference<Rng>::value, int> = 0>
-                static constexpr auto impl(Rng && rng, int)
-                    noexcept(noexcept(rng.end())) ->
-                    decltype(rng.end())
-                {
-                    return rng.end();
-                }
-            public:
-                template<typename Rng>
-                constexpr auto operator()(Rng && rng) const
-                    noexcept(noexcept(end_fn::impl(static_cast<Rng &&>(rng), 0))) ->
-                    detail::decay_t<decltype(end_fn::impl(static_cast<Rng &&>(rng), 0))>
-                {
-                    return end_fn::impl(static_cast<Rng &&>(rng), 0);
-                }
-            };
-
             struct rbegin_fn
             {
             private:
                 template<typename Rng>
                 static constexpr auto impl(Rng && rng, long)
-                    noexcept(noexcept(rbegin(static_cast<Rng &&>(rng)))) ->
-                    decltype(rbegin(static_cast<Rng &&>(rng)))
+                    noexcept(noexcept(detail::decay_copy(rbegin(static_cast<Rng &&>(rng))))) ->
+                    detail::decay_t<decltype(rbegin(static_cast<Rng &&>(rng)))>
                 {
                     return rbegin(static_cast<Rng &&>(rng));
                 }
                 template<typename Rng,
                     meta::if_c<std::is_lvalue_reference<Rng>::value, int> = 0>
                 static constexpr auto impl(Rng && rng, int)
-                    noexcept(noexcept(rng.rbegin())) ->
-                    decltype(rng.rbegin())
+                    noexcept(noexcept(detail::decay_copy(rng.rbegin()))) ->
+                    detail::decay_t<decltype(rng.rbegin())>
                 {
                     return rng.rbegin();
                 }
             public:
                 template<typename Rng>
                 constexpr auto operator()(Rng && rng) const
-                    noexcept(noexcept(rbegin_fn::impl(static_cast<Rng &&>(rng), 0))) ->
-                    detail::decay_t<decltype(rbegin_fn::impl(static_cast<Rng &&>(rng), 0))>
-                {
-                    return rbegin_fn::impl(static_cast<Rng &&>(rng), 0);
-                }
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    rbegin_fn::impl(static_cast<Rng &&>(rng), 0)
+                )
                 template<typename T, std::size_t N>
                 constexpr
                 ranges::reverse_iterator<T*> operator()(T (&t)[N]) const noexcept
@@ -183,27 +222,26 @@ namespace ranges
             private:
                 template<typename Rng>
                 static constexpr auto impl(Rng && rng, long)
-                    noexcept(noexcept(rend(static_cast<Rng &&>(rng)))) ->
-                    decltype(rend(static_cast<Rng &&>(rng)))
+                    noexcept(noexcept(detail::decay_copy(rend(static_cast<Rng &&>(rng))))) ->
+                    detail::decay_t<decltype(rend(static_cast<Rng &&>(rng)))>
                 {
                     return rend(static_cast<Rng &&>(rng));
                 }
                 template<typename Rng,
                     meta::if_c<std::is_lvalue_reference<Rng>::value, int> = 0>
                 static constexpr auto impl(Rng && rng, int)
-                    noexcept(noexcept(rng.rend())) ->
-                    decltype(rng.rend())
+                    noexcept(noexcept(detail::decay_copy(rng.rend()))) ->
+                    detail::decay_t<decltype(rng.rend())>
                 {
                     return rng.rend();
                 }
             public:
                 template<typename Rng>
                 constexpr auto operator()(Rng && rng) const
-                    noexcept(noexcept(rend_fn::impl(static_cast<Rng &&>(rng), 0))) ->
-                    detail::decay_t<decltype(rend_fn::impl(static_cast<Rng &&>(rng), 0))>
-                {
-                    return rend_fn::impl(static_cast<Rng &&>(rng), 0);
-                }
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    rend_fn::impl(static_cast<Rng &&>(rng), 0)
+                )
                 template<typename T, std::size_t N>
                 constexpr
                 ranges::reverse_iterator<T*> operator()(T (&t)[N]) const noexcept
@@ -221,87 +259,77 @@ namespace ranges
         /// \endcond
 
         /// \ingroup group-core
-        /// \return The result of an unqualified call to the `begin` free function
-        RANGES_INLINE_VARIABLE(begin_fn, begin)
-
-        /// \ingroup group-core
-        /// \return The result of an unqualified call to the `end` free function
-        RANGES_INLINE_VARIABLE(end_fn, end)
-
-        /// \ingroup group-core
         /// \return The result of an unqualified call to the `rbegin` free function
-        RANGES_INLINE_VARIABLE(rbegin_fn, rbegin)
+        RANGES_INLINE_VARIABLE(adl_begin_end_detail::rbegin_fn, rbegin)
 
         /// \ingroup group-core
         /// \return The result of an unqualified call to the `rend` free function
-        RANGES_INLINE_VARIABLE(rend_fn, rend)
+        RANGES_INLINE_VARIABLE(adl_begin_end_detail::rend_fn, rend)
 
-        namespace adl_begin_end_detail
+
+        /// \cond
+        namespace cbegin_end_detail
         {
             struct cbegin_fn
             {
                 template<typename Rng>
                 constexpr auto operator()(Rng const & rng) const
-                  noexcept(noexcept(::ranges::begin(rng)))
-                  -> decltype(::ranges::begin(rng))
-                {
-                    return ::ranges::begin(rng);
-                }
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    begin(rng)
+                )
             };
 
             struct cend_fn
             {
                 template<typename Rng>
                 constexpr auto operator()(Rng const & rng) const
-                  noexcept(noexcept(::ranges::end(rng)))
-                  -> decltype(::ranges::end(rng))
-                {
-                    return ::ranges::end(rng);
-                }
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    end(rng)
+                )
             };
 
             struct crbegin_fn
             {
                 template<typename Rng>
                 constexpr auto operator()(Rng const & rng) const
-                  noexcept(noexcept(::ranges::rbegin(rng)))
-                  -> decltype(::ranges::rbegin(rng))
-                {
-                    return ::ranges::rbegin(rng);
-                }
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    rbegin(rng)
+                )
             };
 
             struct crend_fn
             {
                 template<typename Rng>
                 constexpr auto operator()(Rng const & rng) const
-                  noexcept(noexcept(::ranges::rend(rng)))
-                  -> decltype(::ranges::rend(rng))
-                {
-                    return ::ranges::rend(rng);
-                }
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    rend(rng)
+                )
             };
         }
 
         /// \ingroup group-core
         /// \return The result of an unqualified call to the `begin` free function
         /// with a const-qualified argument.
-        RANGES_INLINE_VARIABLE(cbegin_fn, cbegin)
+        RANGES_INLINE_VARIABLE(cbegin_end_detail::cbegin_fn, cbegin)
 
         /// \ingroup group-core
         /// \return The result of an unqualified call to the `end` free function
         /// with a const-qualified argument.
-        RANGES_INLINE_VARIABLE(cend_fn, cend)
+        RANGES_INLINE_VARIABLE(cbegin_end_detail::cend_fn, cend)
 
         /// \ingroup group-core
         /// \return The result of an unqualified call to the `rbegin` free function
         /// with a const-qualified argument.
-        RANGES_INLINE_VARIABLE(crbegin_fn, crbegin)
+        RANGES_INLINE_VARIABLE(cbegin_end_detail::crbegin_fn, crbegin)
 
         /// \ingroup group-core
         /// \return The result of an unqualified call to the `rend` free function
         /// with a const-qualified argument.
-        RANGES_INLINE_VARIABLE(crend_fn, crend)
+        RANGES_INLINE_VARIABLE(cbegin_end_detail::crend_fn, crend)
 
         /// \ingroup group-core
         struct safe_begin_fn

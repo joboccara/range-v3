@@ -417,11 +417,11 @@ namespace ranges
             template<typename I,
                 CONCEPT_REQUIRES_(Readable<I>())>
             RANGES_CXX14_CONSTEXPR
-            iterator_rvalue_reference_t<I> operator()(I const &i) const
-                noexcept(noexcept(indirect_move(i)))
-            {
-                return indirect_move(i);
-            }
+            auto operator()(I const &i) const
+            RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+            (
+                static_cast<iterator_rvalue_reference_t<I>>(indirect_move(i))
+            )
         };
 
         /// \ingroup group-utility

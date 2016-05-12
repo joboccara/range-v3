@@ -48,9 +48,16 @@ namespace ranges
                 mutable semiregular_t<value_type> value_;
             public:
                 postfix_increment_proxy() = default;
+                CONCEPT_REQUIRES(Constructible<value_type, iterator_reference_t<I const>>())
                 RANGES_CXX14_CONSTEXPR
                 explicit postfix_increment_proxy(I const& x)
                   : value_(*x)
+                {}
+                // HACK: let istream_range<move_only_type> model range
+                CONCEPT_REQUIRES(!Constructible<value_type, iterator_reference_t<I const>>())
+                RANGES_CXX14_CONSTEXPR
+                explicit postfix_increment_proxy(I x)
+                  : value_(detail::move(*x))
                 {}
                 // Returning a mutable reference allows nonsense like
                 // (*r++).mutate(), but it imposes fewer assumptions about the
