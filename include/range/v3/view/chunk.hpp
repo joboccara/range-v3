@@ -45,11 +45,11 @@ namespace ranges
         {
         private:
             CONCEPT_ASSERT(ForwardRange<Rng>());
-            using offset_t =
-                meta::if_<
-                    BidirectionalRange<Rng>,
-                    range_difference_t<Rng>,
-                    constant<range_difference_t<Rng>, 0>>;
+            using offset_t = meta::if_<
+                meta::or_<BidirectionalRange<Rng>,
+                    SizedIteratorRange<range_iterator_t<Rng>, range_iterator_t<Rng>>>,
+                range_difference_t<Rng>,
+                constant<range_difference_t<Rng>, 0>>;
             range_difference_t<Rng> n_;
             friend range_access;
             struct adaptor;

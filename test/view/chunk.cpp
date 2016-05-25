@@ -89,6 +89,14 @@ int main()
         CHECK((next(it,5) - it) == 0);
         CHECK((next(it,6) - it) == 0);
         CHECK((next(it,7) - it) == 1);
+        CHECK(next(it, next(it, 0) - it) == next(it, 0));
+        CHECK(next(it, next(it, 1) - it) == next(it, 1));
+        CHECK(next(it, next(it, 2) - it) == next(it, 2));
+        CHECK(next(it, next(it, 3) - it) == next(it, 3));
+        CHECK(next(it, next(it, 4) - it) == next(it, 4));
+        CHECK(next(it, next(it, 5) - it) == next(it, 5));
+        CHECK(next(it, next(it, 6) - it) == next(it, 6));
+        CHECK(next(it, next(it, 7) - it) == next(it, 7));
     }
 
     {
@@ -112,6 +120,14 @@ int main()
         CHECK((next(it,5) - it) == 0);
         CHECK((next(it,6) - it) == 0);
         CHECK((next(it,7) - it) == 0);
+        CHECK(next(it, next(it, 0) - it) == next(it, 0));
+        CHECK(next(it, next(it, 1) - it) == next(it, 1));
+        CHECK(next(it, next(it, 2) - it) == next(it, 2));
+        CHECK(next(it, next(it, 3) - it) == next(it, 3));
+        CHECK(next(it, next(it, 4) - it) == next(it, 4));
+        CHECK(next(it, next(it, 5) - it) == next(it, 5));
+        CHECK(next(it, next(it, 6) - it) == next(it, 6));
+        CHECK(next(it, next(it, 7) - it) == next(it, 7));
     }
 
     {
@@ -135,6 +151,14 @@ int main()
         CHECK((next(it,5) - it) == 1);
         CHECK((next(it,6) - it) == 2);
         CHECK((next(it,7) - it) == 0);
+        CHECK(next(it, next(it, 0) - it) == next(it, 0));
+        CHECK(next(it, next(it, 1) - it) == next(it, 1));
+        CHECK(next(it, next(it, 2) - it) == next(it, 2));
+        CHECK(next(it, next(it, 3) - it) == next(it, 3));
+        CHECK(next(it, next(it, 4) - it) == next(it, 4));
+        CHECK(next(it, next(it, 5) - it) == next(it, 5));
+        CHECK(next(it, next(it, 6) - it) == next(it, 6));
+        CHECK(next(it, next(it, 7) - it) == next(it, 7));
     }
 
     return ::test_result();
