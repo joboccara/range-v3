@@ -254,8 +254,9 @@ namespace ranges
                     else if(n < 0)
                         its_.visit_i(advance_rev_fun{this, n});
                 }
-                CONCEPT_REQUIRES(meta::and_c<(bool)
-                    SizedSentinel<range_iterator_t<Rngs>, range_iterator_t<Rngs>>()...>::value)
+                CONCEPT_REQUIRES(meta::and_c<
+                    SizedSentinel<range_iterator_t<Rngs>, range_iterator_t<Rngs>>::value...,
+                    ForwardIterator<range_iterator_t<Rngs>>::value...>::value)
                 difference_type distance_to(cursor const &that) const
                 {
                     if(its_.index() <= that.its_.index())
