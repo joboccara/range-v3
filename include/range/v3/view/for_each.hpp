@@ -59,7 +59,7 @@ namespace ranges
                 template<typename Rng, typename F>
                 using Concept = meta::and_<
                     Range<Rng>,
-                    IndirectCallable<F, range_iterator_t<Rng>>,
+                    Callable<F, range_reference_t<Rng>>,
                     Range<concepts::Callable::result_t<F, range_common_reference_t<Rng>>>>;
 
                 template<typename Rng, typename F,
@@ -77,7 +77,7 @@ namespace ranges
                 {
                     CONCEPT_ASSERT_MSG(Range<Rng>(),
                         "Rng is not a model of the Range concept.");
-                    CONCEPT_ASSERT_MSG(IndirectCallable<F, range_iterator_t<Rng>>(),
+                    CONCEPT_ASSERT_MSG(Callable<F, range_reference_t<Rng>>(),
                         "The function F is not callable with arguments of the type of the range's "
                         "common reference type.");
                     CONCEPT_ASSERT_MSG(Range<concepts::Callable::result_t<F,
@@ -95,23 +95,22 @@ namespace ranges
 
         struct yield_fn
         {
-            template<typename V,
-                CONCEPT_REQUIRES_(SemiRegular<V>())>
-            single_view<V> operator()(V v) const
+            template<typename Arg, typename Val = detail::decay_t<Arg>,
+                CONCEPT_REQUIRES_(CopyConstructible<Val>() && Constructible<Val, Arg &&>())>
+            single_view<Val> operator()(Arg && arg) const
             {
-                return view::single(std::move(v));
+                return view::single(std::forward<Arg>(arg));
             }
 
         #ifndef RANGES_DOXYGEN_INVOKED
             template<typename Arg, typename Val = detail::decay_t<Arg>,
-                CONCEPT_REQUIRES_(!(SemiRegular<Val>() && Constructible<Val, Arg &&>()))>
+                CONCEPT_REQUIRES_(!(CopyConstructible<Val>() && Constructible<Val, Arg &&>()))>
             void operator()(Arg &&) const
             {
-                CONCEPT_ASSERT_MSG(SemiRegular<Val>(),
-                    "The object passed to yield must be a model of the SemiRegular "
-                    "concept; that is, it needs to be default constructible, copy and move "
-                    "constructible, and destructible.");
-                CONCEPT_ASSERT_MSG(!SemiRegular<Val>() || Constructible<Val, Arg &&>(),
+                CONCEPT_ASSERT_MSG(CopyConstructible<Val>(),
+                    "The object passed to yield must be a model of the CopyConstructible "
+                    "concept; that is, it needs to be copy and move constructible, and destructible.");
+                CONCEPT_ASSERT_MSG(!CopyConstructible<Val>() || Constructible<Val, Arg &&>(),
                     "The object type passed to yield must be initializable from the "
                     "actual argument expression.");
             }

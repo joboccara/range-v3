@@ -23,6 +23,7 @@
 #include <range/v3/view_facade.hpp>
 #include <range/v3/utility/iterator_concepts.hpp>
 #include <range/v3/utility/iterator_traits.hpp>
+#include <range/v3/utility/semiregular.hpp>
 #include <range/v3/utility/static_const.hpp>
 
 namespace ranges
@@ -37,56 +38,55 @@ namespace ranges
         {
         private:
             friend struct range_access;
-            Val value_;
+            mutable semiregular_t<Val> value_;
             struct cursor
             {
             private:
-                Val value_;
-                bool done_;
+                Val* ptr_ = nullptr;
             public:
                 cursor() = default;
-                explicit cursor(Val value)
-                  : value_(std::move(value)), done_(false)
+                explicit cursor(Val* ptr)
+                  : ptr_(ptr)
                 {}
-                Val get() const
+                Val& get() const
                 {
-                    return value_;
-                }
-                bool done() const
-                {
-                    return done_;
+                    return *ptr_;
                 }
                 bool equal(cursor const &that) const
                 {
-                    return done_ == that.done_;
+                    return ptr_ == that.ptr_;
                 }
                 void next()
                 {
-                    done_ = true;
+                    ++ptr_;
                 }
                 void prev()
                 {
-                    done_ = false;
+                    --ptr_;
                 }
                 void advance(std::ptrdiff_t n)
                 {
-                    n += done_;
-                    RANGES_ASSERT(n == 0 || n == 1);
-                    done_ = n != 0;
+                    ptr_ += n;
                 }
                 std::ptrdiff_t distance_to(cursor const &that) const
                 {
-                    return that.done_ - done_;
+                    return that.ptr_ - ptr_;
                 }
             };
             cursor begin_cursor() const
             {
-                return cursor{value_};
+                return cursor{std::addressof(static_cast<Val&>(value_))};
+            }
+            cursor end_cursor() const
+            {
+                return cursor{std::addressof(static_cast<Val&>(value_)) + 1};
             }
         public:
             single_view() = default;
-            constexpr explicit single_view(Val value)
-              : value_(detail::move(value))
+            template<typename Arg,
+                CONCEPT_REQUIRES_(Constructible<Val, Arg &&>())>
+            constexpr explicit single_view(Arg && arg)
+              : value_(std::forward<Arg>(arg))
             {}
             constexpr std::size_t size() const
             {
@@ -98,22 +98,22 @@ namespace ranges
         {
             struct single_fn
             {
-                template<typename Val, CONCEPT_REQUIRES_(SemiRegular<Val>())>
-                single_view<Val> operator()(Val value) const
+                template<typename Arg, typename Val = detail::decay_t<Arg>,
+                    CONCEPT_REQUIRES_(CopyConstructible<Val>() && Constructible<Val, Arg &&>())>
+                single_view<Val> operator()(Arg && arg) const
                 {
-                    return single_view<Val>{std::move(value)};
+                    return single_view<Val>{std::forward<Arg>(arg)};
                 }
             #ifndef RANGES_DOXYGEN_INVOKED
                 // For error reporting
                 template<typename Arg, typename Val = detail::decay_t<Arg>,
-                    CONCEPT_REQUIRES_(!(SemiRegular<Val>() && Constructible<Val, Arg &&>()))>
+                    CONCEPT_REQUIRES_(!(CopyConstructible<Val>() && Constructible<Val, Arg &&>()))>
                 void operator()(Arg &&) const
                 {
-                    CONCEPT_ASSERT_MSG(SemiRegular<Val>(),
-                        "The object passed to view::single must be a model of the SemiRegular "
-                        "concept; that is, it needs to be default constructible, copy and move "
-                        "constructible, and destructible.");
-                    CONCEPT_ASSERT_MSG(!SemiRegular<Val>() || Constructible<Val, Arg &&>(),
+                    CONCEPT_ASSERT_MSG(CopyConstructible<Val>(),
+                        "The object passed to view::single must be a model of the CopyConstructible "
+                        "concept; that is, it needs to be copy and move constructible, and destructible.");
+                    CONCEPT_ASSERT_MSG(!CopyConstructible<Val>() || Constructible<Val, Arg &&>(),
                         "The object type passed to view::single must be initializable from the "
                         "actual argument expression.");
                 }

@@ -32,7 +32,12 @@ namespace ranges
         private:
             optional<T> t_;
         public:
-            semiregular() = default;
+            CONCEPT_REQUIRES(DefaultConstructible<T>())
+            semiregular()
+              : t_(in_place)
+            {}
+            CONCEPT_REQUIRES(!DefaultConstructible<T>())
+            semiregular() noexcept {}
             semiregular(T f)
               : t_(std::move(f))
             {}
@@ -40,45 +45,95 @@ namespace ranges
             semiregular(in_place_t, Args &&...args)
               : t_(in_place, std::forward<Args>(args)...)
             {}
-            T & get()
+            T & get() &
             {
                 RANGES_ASSERT(!!t_);
                 return *t_;
             }
-            T const & get() const
+            T const & get() const &
             {
                 RANGES_ASSERT(!!t_);
                 return *t_;
             }
-            semiregular &operator=(T const &t)
+            T && get() &&
+            {
+                RANGES_ASSERT(!!t_);
+                return std::move(*t_);
+            }
+            T const && get() const &&
+            {
+                RANGES_ASSERT(!!t_);
+                return std::move(*t_);
+            }
+            CONCEPT_REQUIRES(Assignable<T&, T const&>())
+            semiregular &operator=(T const &t) &
+            {
+                if (t_)
+                    *t_ = t;
+                else
+                    t_ = t;
+                return *this;
+            }
+            CONCEPT_REQUIRES(!Assignable<T&, T const&>())
+            semiregular &operator=(T const &t) &
             {
                 t_ = t;
                 return *this;
             }
-            semiregular &operator=(T &&t)
+            CONCEPT_REQUIRES(Assignable<T&, T &&>())
+            semiregular &operator=(T &&t) &
+            {
+                if (t_)
+                    *t_ = std::move(t);
+                else
+                    t_ = std::move(t);
+                return *this;
+            }
+            CONCEPT_REQUIRES(!Assignable<T&, T &&>())
+            semiregular &operator=(T &&t) &
             {
                 t_ = std::move(t);
                 return *this;
             }
-            operator T &()
+            operator T &() &
             {
                 return get();
             }
-            operator T const &() const
+            operator T const &() const &
             {
                 return get();
+            }
+            operator T &&() &&
+            {
+                return std::move(get());
+            }
+            operator T const &&() const &&
+            {
+                return std::move(get());
             }
             template<typename...Args>
-            auto operator()(Args &&...args) ->
-                decltype(std::declval<T &>()(std::forward<Args>(args)...))
+            auto operator()(Args &&...args) &
+                RANGES_DECLTYPE_NOEXCEPT(std::declval<T &>()(std::forward<Args>(args)...))
             {
                 return get()(std::forward<Args>(args)...);
             }
             template<typename...Args>
-            auto operator()(Args &&...args) const ->
-                decltype(std::declval<T const &>()(std::forward<Args>(args)...))
+            auto operator()(Args &&...args) const &
+                RANGES_DECLTYPE_NOEXCEPT(std::declval<T const &>()(std::forward<Args>(args)...))
             {
                 return get()(std::forward<Args>(args)...);
+            }
+            template<typename...Args>
+            auto operator()(Args &&...args) &&
+                RANGES_DECLTYPE_NOEXCEPT(std::declval<T &&>()(std::forward<Args>(args)...))
+            {
+                return std::move(get())(std::forward<Args>(args)...);
+            }
+            template<typename...Args>
+            auto operator()(Args &&...args) const &&
+                RANGES_DECLTYPE_NOEXCEPT(std::declval<T const &&>()(std::forward<Args>(args)...))
+            {
+                return std::move(get())(std::forward<Args>(args)...);
             }
         };
 
@@ -110,6 +165,12 @@ namespace ranges
 
         template<typename T>
         T && get(meta::id_t<semiregular<T>> &&t)
+        {
+            return std::move(t.get());
+        }
+
+        template<typename T>
+        T const && get(meta::id_t<semiregular<T>> const &&t)
         {
             return std::move(t.get());
         }
