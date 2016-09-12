@@ -16,21 +16,68 @@
 #define RANGES_V3_DETAIL_CONFIG_HPP
 
 #include <iosfwd>
+#if (defined(NDEBUG) && !defined(RANGES_ENSURE_MSG)) || \
+    (!defined(NDEBUG) && !defined(RANGES_ASSERT) && \
+     defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5)
+#include <cstdio>
+#include <cstdlib>
+
+namespace ranges
+{
+    inline namespace v3
+    {
+        namespace detail
+        {
+            template<class = void>
+            [[noreturn]] void assert_failure(char const *file, int line, char const *msg)
+            {
+                std::fprintf(stderr, "%s(%d): %s\n", file, line, msg);
+                std::abort();
+            }
+        }
+    }
+}
+#endif
 
 #ifndef RANGES_ASSERT
+#if !defined(NDEBUG) && defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
+#define RANGES_ASSERT(...) ((__VA_ARGS__) ? void(0) : \
+    ::ranges::detail::assert_failure(__FILE__, __LINE__, "assertion failed: " #__VA_ARGS__))
+#else
 #include <cassert>
 #define RANGES_ASSERT assert
 #endif
+#endif
+
+#ifndef RANGES_ASSUME
+#if defined(__clang__) || defined(__GNUC__)
+#define RANGES_ASSUME(COND) ((COND) ? void(0) : __builtin_unreachable())
+#elif defined(_MSC_VER)
+#define RANGES_ASSUME(COND) ((void)(__assume(COND), (COND)))
+#else
+#define RANGES_ASSUME(COND) ((void)(COND))
+#endif
+#endif // RANGES_ASSUME
+
+#ifndef RANGES_EXPECT
+#ifdef NDEBUG
+#define RANGES_EXPECT(COND) RANGES_ASSUME(COND)
+#else // NDEBUG
+#define RANGES_EXPECT(COND) RANGES_ASSERT(COND)
+#endif // NDEBUG
+#endif // RANGES_EXPECT
 
 #ifndef RANGES_ENSURE_MSG
-#include <exception>
+#if defined(NDEBUG)
 #define RANGES_ENSURE_MSG(COND, MSG) \
-    ((COND) ? void() : (RANGES_ASSERT(!(true && MSG)), std::terminate()))
+    ((COND) ? void(0) : ::ranges::detail::assert_failure(__FILE__, __LINE__, "ensure failed: " MSG))
+#else
+#define RANGES_ENSURE_MSG(COND, MSG) RANGES_ASSERT((COND) && MSG)
+#endif
 #endif
 
 #ifndef RANGES_ENSURE
-#define RANGES_ENSURE(COND) \
-    RANGES_ENSURE_MSG(COND, #COND)
+#define RANGES_ENSURE(...) RANGES_ENSURE_MSG((__VA_ARGS__), #__VA_ARGS__)
 #endif
 
 #define RANGES_DECLTYPE_AUTO_RETURN(...)                        \
