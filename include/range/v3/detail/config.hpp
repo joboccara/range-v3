@@ -129,6 +129,9 @@ namespace ranges
 #define RANGES_CXX_THREAD_LOCAL_PRE_STANDARD 200000 // Arbrarily chosen number between 0 and C++11
 #define RANGES_CXX_THREAD_LOCAL_11 RANGES_CXX_STD_11
 #define RANGES_CXX_THREAD_LOCAL_14 RANGES_CXX_THREAD_LOCAL_11
+#define RANGES_CXX_INLINE_VARIABLES_11 0
+#define RANGES_CXX_INLINE_VARIABLES_14 0
+#define RANGES_CXX_INLINE_VARIABLES_17 201606
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #if _MSC_VER >= 1900
@@ -166,6 +169,7 @@ namespace ranges
 #define RANGES_DIAGNOSTIC_IGNORE_GLOBAL_CONSTRUCTORS
 #define RANGES_DIAGNOSTIC_IGNORE_SIGN_CONVERSION
 #define RANGES_DIAGNOSTIC_IGNORE_UNNEEDED_INTERNAL
+#define RANGES_DIAGNOSTIC_IGNORE_COMMA
 
 #else // ^^^ defined(_MSC_VER) ^^^ / vvv !defined(_MSC_VER) vvv
 // Generic configuration using SD-6 feature test macros with fallback to __cplusplus
@@ -180,13 +184,9 @@ namespace ranges
 #define RANGES_DIAGNOSTIC_IGNORE_UNDEFINED_INTERNAL RANGES_DIAGNOSTIC_IGNORE("-Wundefined-internal")
 #define RANGES_DIAGNOSTIC_IGNORE_MISMATCHED_TAGS RANGES_DIAGNOSTIC_IGNORE("-Wmismatched-tags")
 #define RANGES_DIAGNOSTIC_IGNORE_SIGN_CONVERSION RANGES_DIAGNOSTIC_IGNORE("-Wsign-conversion")
-#ifdef __clang__
-#define RANGES_DIAGNOSTIC_IGNORE_GLOBAL_CONSTRUCTORS RANGES_DIAGNOSTIC_IGNORE("-Wglobal-constructors")
-#define RANGES_DIAGNOSTIC_IGNORE_UNNEEDED_INTERNAL RANGES_DIAGNOSTIC_IGNORE("-Wunneeded-internal-declaration")
-#else
-#define RANGES_DIAGNOSTIC_IGNORE_GLOBAL_CONSTRUCTORS
-#define RANGES_DIAGNOSTIC_IGNORE_UNNEEDED_INTERNAL
-#endif
+#define RANGES_DIAGNOSTIC_IGNORE_COMMA RANGES_DIAGNOSTIC_IGNORE_PRAGMAS RANGES_DIAGNOSTIC_IGNORE("-Wcomma")
+#define RANGES_DIAGNOSTIC_IGNORE_GLOBAL_CONSTRUCTORS RANGES_DIAGNOSTIC_IGNORE_PRAGMAS RANGES_DIAGNOSTIC_IGNORE("-Wglobal-constructors")
+#define RANGES_DIAGNOSTIC_IGNORE_UNNEEDED_INTERNAL RANGES_DIAGNOSTIC_IGNORE_PRAGMAS RANGES_DIAGNOSTIC_IGNORE("-Wunneeded-internal-declaration")
 #else
 #define RANGES_DIAGNOSTIC_PUSH
 #define RANGES_DIAGNOSTIC_POP
@@ -293,7 +293,7 @@ namespace ranges
 #endif
 
 #ifndef RANGES_DISABLE_DEPRECATED_WARNINGS
-#if RANGES_CXX_ATTRIBUTE_DEPRECATED && \
+#if RANGES_CXX_ATTRIBUTE_DEPRECATED &&            \
    !((defined(__clang__) || defined(__GNUC__)) && \
      RANGES_CXX_STD < RANGES_CXX_STD_14)
 #define RANGES_DEPRECATED(MSG) [[deprecated(MSG)]]
@@ -323,9 +323,6 @@ namespace ranges
 #define RANGES_NDEBUG_CONSTEXPR inline
 #endif
 
-#define RANGES_CXX_INLINE_VARIABLES_11 0
-#define RANGES_CXX_INLINE_VARIABLES_14 0
-#define RANGES_CXX_INLINE_VARIABLES_17 201606
 #ifndef RANGES_CXX_INLINE_VARIABLES
 
 #ifdef __cpp_inline_variables // TODO: fix this if SD-6 picks another name
@@ -343,14 +340,14 @@ namespace ranges
 
 #if RANGES_CXX_INLINE_VARIABLES < RANGES_CXX_INLINE_VARIABLES_17
 #define RANGES_INLINE_VARIABLE(type, name)                  \
-    inline namespace                   \
+    inline namespace                                        \
     {                                                       \
         constexpr auto& name = static_const<type>::value;   \
     }
 
 #else  // RANGES_CXX_INLINE_VARIABLES >= RANGES_CXX_INLINE_VARIABLES_17
 #define RANGES_INLINE_VARIABLE(type, name) \
-    inline namespace function_objects             \
+    inline namespace function_objects      \
     {                                      \
         inline constexpr type name{};      \
     }
