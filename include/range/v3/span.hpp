@@ -26,6 +26,7 @@
 #include <range/v3/algorithm/equal.hpp>
 #include <range/v3/algorithm/lexicographical_compare.hpp>
 #include <range/v3/utility/iterator.hpp>
+#include <range/v3/utility/nonnegative.hpp>
 
 namespace ranges
 {
@@ -56,14 +57,14 @@ namespace ranges
                 CONCEPT_ASSERT(0 <= N);
 
                 span_base() = default;
-                constexpr span_base(T* ptr, std::ptrdiff_t size) noexcept
+                constexpr span_base(T* ptr, nonnegative<std::ptrdiff_t> size) noexcept
                   : ptr_{(RANGES_EXPECT(ptr || !N), RANGES_EXPECT(size == N), ptr)}
                 {}
                 constexpr T* data() const noexcept
                 {
                     return ptr_;
                 }
-                constexpr std::ptrdiff_t size() const noexcept
+                constexpr nonnegative<std::ptrdiff_t> size() const noexcept
                 {
                     return N;
                 }
@@ -76,21 +77,21 @@ namespace ranges
             {
             public:
                 span_base() = default;
-                constexpr span_base(T* ptr, std::ptrdiff_t size) noexcept
+                constexpr span_base(T* ptr, nonnegative<std::ptrdiff_t> size) noexcept
                   : ptr_{(RANGES_EXPECT(ptr || !size), ptr)}
-                  , size_{(RANGES_EXPECT(0 <= size), size)}
+                  , size_{size}
                 {}
                 constexpr T* data() const noexcept
                 {
                     return ptr_;
                 }
-                constexpr std::ptrdiff_t size() const noexcept
+                constexpr nonnegative<std::ptrdiff_t> size() const noexcept
                 {
                     return size_;
                 }
             protected:
                 T* ptr_ = nullptr;
-                std::ptrdiff_t size_ = 0;
+                nonnegative<std::ptrdiff_t> size_ = 0;
             };
         } // namespace detail
         /// \endcond
@@ -120,7 +121,7 @@ namespace ranges
             constexpr span(std::nullptr_t) noexcept
               : span{}
             {}
-            constexpr span(pointer ptr, index_type count) noexcept
+            constexpr span(pointer ptr, nonnegative<index_type> count) noexcept
               : storage_{ptr, count}
             {}
             constexpr span(pointer first, pointer last) noexcept
@@ -130,7 +131,7 @@ namespace ranges
             template<typename Int,
                 CONCEPT_REQUIRES_(SignedIntegral<Int>())>
             constexpr span(pointer first, Int count) noexcept
-              : span{first, index_type{count}}
+              : span{first, nonnegative<index_type>{count}}
             {}
 
             template<typename Rng>
@@ -144,7 +145,7 @@ namespace ranges
             template<typename Rng,
                 CONCEPT_REQUIRES_(ConversionConstraint<Rng>())>
             constexpr span(Rng && rng)
-              : span{ranges::data(rng), static_cast<index_type>(ranges::size(rng))}
+              : span{ranges::data(rng), nonnegative<index_type>{static_cast<index_type>(ranges::size(rng))}} // TODO narrow_cast?
             {}
 
             // [span.sub], span subviews
@@ -178,20 +179,20 @@ namespace ranges
                     span<T, Count>{data() + Offset,
                         Count == dynamic_extent ? size() - Offset : Count};
             }
-            constexpr span<T> first(index_type count) const noexcept
+            constexpr span<T> first(nonnegative<index_type> count) const noexcept
             {
-                return RANGES_EXPECT(0 <= count && count <= size()),
+                return RANGES_EXPECT(count <= size()),
                     span<T>{data(), count};
             }
-            constexpr span<T> last(index_type count) const noexcept
+            constexpr span<T> last(nonnegative<index_type> count) const noexcept
             {
-                return RANGES_EXPECT(0 <= count && count <= size()),
+                return RANGES_EXPECT(count <= size()),
                     span<T>{data() + size() - count, count};
             }
             constexpr span<T> subspan(
-                index_type offset, index_type count = dynamic_extent) const noexcept
+                nonnegative<index_type> offset, index_type count = dynamic_extent) const noexcept
             {
-                return RANGES_EXPECT(0 <= offset && offset <= size()),
+                return RANGES_EXPECT(offset <= size()),
                     RANGES_EXPECT(count == dynamic_extent ||
                         (0 <= count && offset + count <= size())),
                     span<T>{data() + offset,
@@ -200,23 +201,23 @@ namespace ranges
 
             // [span.obs], span observers
             constexpr pointer data() const noexcept { return storage_.data(); }
-            constexpr index_type size() const noexcept { return storage_.size(); }
-            constexpr index_type length() const noexcept { return size(); }
-            constexpr index_type length_bytes() const noexcept { return size_bytes(); }
-            constexpr index_type size_bytes() const noexcept
+            constexpr nonnegative<index_type> size() const noexcept { return storage_.size(); }
+            constexpr nonnegative<index_type> length() const noexcept { return size(); }
+            constexpr nonnegative<index_type> length_bytes() const noexcept { return size_bytes(); }
+            constexpr nonnegative<index_type> size_bytes() const noexcept
             {
                 return detail::byte_size<T>(size());
             }
             constexpr bool empty() const noexcept { return size() == 0; }
 
             // [span.elem], span element access
-            constexpr reference operator[](index_type idx) const noexcept
+            constexpr reference operator[](nonnegative<index_type> idx) const noexcept
             {
-                return RANGES_EXPECT(0 <= idx && idx < size()),
+                return RANGES_EXPECT(idx < size()),
                     RANGES_EXPECT(data()),
                     *(data() + idx);
             }
-            constexpr reference operator()(index_type idx) const noexcept
+            constexpr reference operator()(nonnegative<index_type> idx) const noexcept
             {
                 return (*this)[idx];
             }
