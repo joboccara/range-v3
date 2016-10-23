@@ -14,6 +14,9 @@
 #ifndef RANGES_V3_DETAIL_OPTIONAL_HPP
 #define RANGES_V3_DETAIL_OPTIONAL_HPP
 
+#error Dude - do not include this file.
+#if 0
+
 #include <meta/meta.hpp>
 #include <range/v3/range_fwd.hpp>
 #include <range/v3/utility/static_const.hpp>
@@ -112,5 +115,7 @@ namespace ranges
         }
     }
 }
+
+#endif // 0
 
 #endif

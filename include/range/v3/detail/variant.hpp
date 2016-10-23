@@ -14,6 +14,10 @@
 #ifndef RANGES_V3_DETAIL_VARIANT_HPP
 #define RANGES_V3_DETAIL_VARIANT_HPP
 
+#error Dude, do not include this file.
+
+#if 0
+
 #include <new>
 #include <tuple>
 #include <memory>
@@ -784,5 +788,7 @@ namespace std
 }
 
 RANGES_DIAGNOSTIC_POP
+
+#endif // 0
 
 #endif

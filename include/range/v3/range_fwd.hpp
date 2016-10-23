@@ -95,7 +95,7 @@ namespace ranges
         /// \endcond
 
         template<typename...>
-        struct variant;
+        class variant;
 
         template<typename I = void>
         struct dangling;
@@ -289,15 +289,23 @@ namespace ranges
                 struct is_trivially_move_assignable
                   : meta::bool_<__is_trivially_assignable(T &, Arg &&)>
                 {};
+                template <class T>
+                struct is_trivially_copyable
+                  : meta::bool_<__is_trivially_copyable(T)>
+                {};
              #elif defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5
                 template<typename T>
                 using is_trivially_copy_assignable = std::is_trivial<T>;
 
                 template<typename T>
                 using is_trivially_move_assignable = std::is_trivial<T>;
+
+                template<typename T>
+                using is_trivially_copyable = std::is_trivial<T>;
             #else
                 using std::is_trivially_copy_assignable;
                 using std::is_trivially_move_assignable;
+                using std::is_trivially_copyable;
             #endif
 
             #if RANGES_CXX_LIB_IS_FINAL > 0

@@ -18,7 +18,7 @@
 #include <range/v3/range_fwd.hpp>
 #include <range/v3/utility/basic_iterator.hpp>
 #include <range/v3/utility/concepts.hpp>
-#include <range/v3/detail/variant.hpp>
+#include <range/v3/utility/variant.hpp>
 
 namespace ranges
 {
@@ -45,112 +45,146 @@ namespace ranges
             private:
                 friend range_access;
                 static_assert(!std::is_same<I, S>::value,
-                              "Error: iterator and sentinel types are the same");
+                    "Error: iterator and sentinel types are the same");
                 using difference_type = iterator_difference_t<I>;
                 struct mixin
                   : basic_mixin<common_cursor>
                 {
                     mixin() = default;
                     using basic_mixin<common_cursor>::basic_mixin;
-                    explicit mixin(I it)
+                    constexpr explicit mixin(I it)
                       : mixin(common_cursor{std::move(it)})
                     {}
-                    explicit mixin(S se)
+                    constexpr explicit mixin(S se)
                       : mixin(common_cursor{std::move(se)})
                     {}
                 };
 
                 variant<I, S> data_;
 
-                explicit common_cursor(I it)
-                  : data_(emplaced_index<0>, std::move(it))
+                constexpr explicit common_cursor(I it)
+                    noexcept(std::is_nothrow_move_constructible<I>::value)
+                  : data_(in_place<0>, std::move(it))
                 {}
-                explicit common_cursor(S se)
-                  : data_(emplaced_index<1>, std::move(se))
+                constexpr explicit common_cursor(S se)
+                    noexcept(std::is_nothrow_move_constructible<S>::value)
+                  : data_(in_place<1>, std::move(se))
                 {}
-                bool is_sentinel() const
+                constexpr bool is_sentinel() const noexcept
                 {
-                    RANGES_EXPECT(data_.valid());
-                    return data_.index() == 1u;
+                    return RANGES_EXPECT(data_.index() == 0u || data_.index() == 1u),
+                        data_.index() == 1u;
                 }
-                I & it()
+                RANGES_CXX14_CONSTEXPR I & it() noexcept
                 {
-                    RANGES_EXPECT(!is_sentinel());
-                    return ranges::get<0>(data_);
+                    return RANGES_EXPECT(data_.index() == 0u),
+                        ranges::get_unchecked<0>(data_);
                 }
-                I const & it() const
+                constexpr I const & it() const noexcept
                 {
-                    RANGES_EXPECT(!is_sentinel());
-                    return ranges::get<0>(data_);
+                    return RANGES_EXPECT(data_.index() == 0u),
+                        ranges::get_unchecked<0>(data_);
                 }
-                S const & se() const
+                constexpr S const & se() const noexcept
                 {
-                    RANGES_EXPECT(is_sentinel());
-                    return ranges::get<1>(data_);
+                    return RANGES_EXPECT(data_.index() == 1u),
+                        ranges::get_unchecked<1>(data_);
                 }
+                struct distance_visitor
+                {
+                    constexpr iterator_difference_t<I>
+                    operator()(S const&, S const&) const noexcept
+                    {
+                        return 0;
+                    }
+                    template<class Left, class Right>
+                    constexpr auto operator()(Left const& left, Right const& right) const
+                    RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                    (
+                        static_cast<iterator_difference_t<I>>(right - left)
+                    )
+                };
                 CONCEPT_REQUIRES((bool)SizedSentinel<S, I>() && (bool)SizedSentinel<I, I>())
-                iterator_difference_t<I>
+                constexpr iterator_difference_t<I>
                 distance_to(common_cursor const &that) const
                 {
-                    return that.is_sentinel() ?
-                        (this->is_sentinel() ? 0 : that.se() - this->it()) :
-                        (this->is_sentinel() ?
-                             that.it() - this->se() :
-                             that.it() - this->it());
+                    return ranges::visit(distance_visitor{}, data_, that.data_);
                 }
                 CONCEPT_REQUIRES(Readable<I>())
-                iterator_rvalue_reference_t<I> move() const
+                constexpr iterator_rvalue_reference_t<I> move() const
                     noexcept(noexcept(iter_move(std::declval<I const &>())))
                 {
-                    RANGES_EXPECT(!is_sentinel());
                     return iter_move(it());
                 }
                 CONCEPT_REQUIRES(Readable<I>())
-                iterator_reference_t<I> get() const
+                constexpr iterator_reference_t<I> get() const
+                    noexcept(noexcept(*std::declval<I const &>()))
                 {
                     return *it();
                 }
                 template<typename T,
                     CONCEPT_REQUIRES_(ExclusivelyWritable_<I, T &&>())>
-                void set(T &&t) const
+                RANGES_CXX14_CONSTEXPR void set(T && t) const
+                    noexcept(noexcept(*std::declval<I const&>() = std::declval<T>()))
                 {
                     *it() = (T &&) t;
                 }
-                template<typename I2, typename S2,
-                    CONCEPT_REQUIRES_(Sentinel<S2, I>() && Sentinel<S, I2>() &&
-                        !EqualityComparable<I, I2>())>
-                bool equal(common_cursor<I2, S2> const &that) const
+                template<typename I2, typename S2>
+                struct equality_visitor
                 {
-                    return is_sentinel() ?
-                        (that.is_sentinel() || that.it() == se()) :
-                        (!that.is_sentinel() || it() == that.se());
-                }
+                    constexpr bool operator()(S const &, S2 const &) const noexcept
+                    {
+                        return true;
+                    }
+                    CONCEPT_REQUIRES(!EqualityComparable<I, I2>())
+                    constexpr bool operator()(I const &, I2 const &) const noexcept
+                    {
+                        return true;
+                    }
+                    template<typename Left, typename Right>
+                    constexpr auto operator()(Left const &l, Right const &r) const
+                    RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                    (
+                        static_cast<bool>(l == r)
+                    )
+                };
                 template<typename I2, typename S2,
-                    CONCEPT_REQUIRES_(Sentinel<S2, I>() && Sentinel<S, I2>() &&
-                        EqualityComparable<I, I2>())>
-                bool equal(common_cursor<I2, S2> const &that) const
+                    CONCEPT_REQUIRES_(Sentinel<S2, I>() && Sentinel<S, I2>())>
+                constexpr bool equal(common_cursor<I2, S2> const &that) const
                 {
-                    return is_sentinel() ?
-                        (that.is_sentinel() || that.it() == se()) :
-                        (that.is_sentinel() ?
-                            it() == that.se() :
-                            it() == that.it());
+                    return ranges::visit(equality_visitor<I2, S2>{}, data_, that.data_);
                 }
-                void next()
+                RANGES_CXX14_CONSTEXPR void next()
+                    noexcept(noexcept(++std::declval<I&>()))
                 {
                     ++it();
                 }
+                template<typename I2, typename S2>
+                struct convert_visitor
+                {
+                    CONCEPT_ASSERT(ExplicitlyConvertibleTo<I const&, I2>() &&
+                                   ExplicitlyConvertibleTo<S const&, S2>());
+
+                    constexpr auto operator()(S const& s) const
+                    RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                    (
+                        common_cursor<I2, S2>{S2{s}}
+                    )
+                    constexpr auto operator()(I const& i) const
+                    RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                    (
+                        common_cursor<I2, S2>{I2{i}}
+                    )
+                };
                 // BUGBUG TODO what about advance??
             public:
                 common_cursor() = default;
                 template<typename I2, typename S2,
-                    CONCEPT_REQUIRES_(ExplicitlyConvertibleTo<I, I2>() &&
-                                      ExplicitlyConvertibleTo<S, S2>())>
+                    CONCEPT_REQUIRES_(ExplicitlyConvertibleTo<I const&, I2>() &&
+                                      ExplicitlyConvertibleTo<S const&, S2>())>
                 operator common_cursor<I2, S2>() const
                 {
-                    return is_sentinel() ?
-                        common_cursor<I2, S2>{S2{se()}} :
-                        common_cursor<I2, S2>{I2{it()}};
+                    return ranges::visit(convert_visitor<I2, S2>{}, data_);
                 }
             };
         }

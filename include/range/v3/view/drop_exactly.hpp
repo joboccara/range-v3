@@ -22,7 +22,6 @@
 #include <range/v3/range_concepts.hpp>
 #include <range/v3/view_interface.hpp>
 #include <range/v3/iterator_range.hpp>
-#include <range/v3/detail/optional.hpp>
 #include <range/v3/utility/box.hpp>
 #include <range/v3/utility/functional.hpp>
 #include <range/v3/utility/iterator_traits.hpp>

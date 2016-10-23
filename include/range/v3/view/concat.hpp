@@ -44,10 +44,11 @@ namespace ranges
             struct deref_fun
             {
                 template<typename I>
-                Reference operator()(I const &it) const
-                {
-                    return *it;
-                }
+                auto operator()(I const &it) const
+                RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT
+                (
+                    static_cast<Reference>(*it)
+                )
             };
 
             template<typename State, typename Value>
@@ -117,7 +118,7 @@ namespace ranges
                     if(ranges::get<N>(its_) == end(std::get<N>(rng_->rngs_)))
                     {
                         ranges::emplace<N + 1>(its_, begin(std::get<N + 1>(rng_->rngs_)));
-                        this->satisfy(meta::size_t<N + 1>{});
+                        satisfy(meta::size_t<N + 1>{});
                     }
                 }
                 void satisfy(meta::size_t<cranges - 1>)
@@ -129,7 +130,7 @@ namespace ranges
                     cursor *pos;
                     template<typename I, std::size_t N,
                         CONCEPT_REQUIRES_(Iterator<I>())>
-                    void operator()(indexed_element<I, N> it) const
+                    void operator()(indexed_element<I&, N> it) const
                     {
                         RANGES_ASSERT(it.get() != end(std::get<N>(pos->rng_->rngs_)));
                         ++it.get();
@@ -141,21 +142,21 @@ namespace ranges
                     cursor *pos;
                     template<typename I,
                         CONCEPT_REQUIRES_(BidirectionalIterator<I>())>
-                    void operator()(indexed_element<I, 0> it) const
+                    void operator()(indexed_element<I&, 0> it) const
                     {
                         RANGES_ASSERT(it.get() != begin(std::get<0>(pos->rng_->rngs_)));
                         --it.get();
                     }
                     template<typename I, std::size_t N,
                         CONCEPT_REQUIRES_(N != 0 && BidirectionalIterator<I>())>
-                    void operator()(indexed_element<I, N> it) const
+                    void operator()(indexed_element<I&, N> it) const
                     {
                         if(it.get() == begin(std::get<N>(pos->rng_->rngs_)))
                         {
                             auto &&rng = std::get<N - 1>(pos->rng_->rngs_);
                             ranges::emplace<N - 1>(pos->its_,
                                 ranges::next(ranges::begin(rng), ranges::end(rng)));
-                            pos->its_.visit_i(*this);
+                            ranges::visit_i(*this, pos->its_);
                         }
                         else
                             --it.get();
@@ -167,13 +168,13 @@ namespace ranges
                     difference_type n;
                     template<typename I,
                         CONCEPT_REQUIRES_(RandomAccessIterator<I>())>
-                    void operator()(indexed_element<I, cranges - 1> it) const
+                    void operator()(indexed_element<I&, cranges - 1> it) const
                     {
                         ranges::advance(it.get(), n);
                     }
                     template<typename I, std::size_t N,
                         CONCEPT_REQUIRES_(RandomAccessIterator<I>())>
-                    void operator()(indexed_element<I, N> it) const
+                    void operator()(indexed_element<I&, N> it) const
                     {
                         auto end = ranges::end(std::get<N>(pos->rng_->rngs_));
                         // BUGBUG If distance(it, end) > n, then using bounded advance
@@ -183,7 +184,7 @@ namespace ranges
                         auto rest = ranges::advance(it.get(), n, std::move(end));
                         pos->satisfy(meta::size_t<N>{});
                         if(rest != 0)
-                            pos->its_.visit_i(advance_fwd_fun{pos, rest});
+                            ranges::visit_i(advance_fwd_fun{pos, rest}, pos->its_);
                     }
                 };
                 struct advance_rev_fun
@@ -192,13 +193,13 @@ namespace ranges
                     difference_type n;
                     template<typename I,
                         CONCEPT_REQUIRES_(RandomAccessIterator<I>())>
-                    void operator()(indexed_element<I, 0> it) const
+                    void operator()(indexed_element<I&, 0> it) const
                     {
                         ranges::advance(it.get(), n);
                     }
                     template<typename I, std::size_t N,
                         CONCEPT_REQUIRES_(RandomAccessIterator<I>())>
-                    void operator()(indexed_element<I, N> it) const
+                    void operator()(indexed_element<I&, N> it) const
                     {
                         auto begin = ranges::begin(std::get<N>(pos->rng_->rngs_));
                         if(it.get() == begin)
@@ -206,13 +207,13 @@ namespace ranges
                             auto &&rng = std::get<N - 1>(pos->rng_->rngs_);
                             ranges::emplace<N - 1>(pos->its_,
                                 ranges::next(ranges::begin(rng), ranges::end(rng)));
-                            pos->its_.visit_i(*this);
+                            ranges::visit_i(*this, pos->its_);
                         }
                         else
                         {
                             auto rest = ranges::advance(it.get(), n, std::move(begin));
                             if(rest != 0)
-                                pos->its_.visit_i(advance_rev_fun{pos, rest});
+                                ranges::visit_i(advance_rev_fun{pos, rest}, pos->its_);
                         }
                     }
                 };
@@ -244,21 +245,20 @@ namespace ranges
                 using single_pass = meta::strict_or<SinglePass<range_iterator_t<Rngs>>...>;
                 cursor() = default;
                 cursor(concat_view_t &rng, begin_tag)
-                  : rng_(&rng), its_{emplaced_index<0>, begin(std::get<0>(rng.rngs_))}
+                  : rng_(&rng), its_{in_place<0>, begin(std::get<0>(rng.rngs_))}
                 {
-                    this->satisfy(meta::size_t<0>{});
+                    satisfy(meta::size_t<0>{});
                 }
                 cursor(concat_view_t &rng, end_tag)
-                  : rng_(&rng), its_{emplaced_index<cranges-1>, end(std::get<cranges-1>(rng.rngs_))}
+                  : rng_(&rng), its_{in_place<cranges-1>, end(std::get<cranges-1>(rng.rngs_))}
                 {}
                 reference get() const
                 {
-                    // Kind of a dumb implementation. Surely there's a better way.
-                    return ranges::get<0>(unique_variant(its_.visit(detail::deref_fun<reference>{})));
+                    return ranges::visit(detail::deref_fun<reference>{}, its_);
                 }
                 void next()
                 {
-                    its_.visit_i(next_fun{this});
+                    ranges::visit_i(next_fun{this}, its_);
                 }
                 CONCEPT_REQUIRES(EqualityComparable<decltype(its_)>())
                 bool equal(cursor const &pos) const
@@ -273,15 +273,15 @@ namespace ranges
                 CONCEPT_REQUIRES(meta::and_c<(bool)BidirectionalRange<Rngs>()...>::value)
                 void prev()
                 {
-                    its_.visit_i(prev_fun{this});
+                    ranges::visit_i(prev_fun{this}, its_);
                 }
                 CONCEPT_REQUIRES(meta::and_c<(bool)RandomAccessRange<Rngs>()...>::value)
                 void advance(difference_type n)
                 {
                     if(n > 0)
-                        its_.visit_i(advance_fwd_fun{this, n});
+                        ranges::visit_i(advance_fwd_fun{this, n}, its_);
                     else if(n < 0)
-                        its_.visit_i(advance_rev_fun{this, n});
+                        ranges::visit_i(advance_rev_fun{this, n}, its_);
                 }
                 CONCEPT_REQUIRES(meta::and_c<(bool)
                     SizedSentinel<range_iterator_t<Rngs>, range_iterator_t<Rngs>>()...>::value)

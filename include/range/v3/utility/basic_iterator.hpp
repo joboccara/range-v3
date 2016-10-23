@@ -656,7 +656,7 @@ namespace ranges
                 using iterator_category =
                     ::meta::_t<
                         downgrade_iterator_category<
-                            typename std_iterator_traits::iterator_category,
+                            typename iterator_associated_types_base<Cur>::iterator_category,
                             typename std_iterator_traits::reference>>;
             };
         }

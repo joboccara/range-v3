@@ -16,6 +16,8 @@
 #include "../simple_test.hpp"
 #include "../test_utils.hpp"
 
+#define STATIC_ASSERT(...) static_assert((__VA_ARGS__), #__VA_ARGS__)
+
 int main()
 {
     using namespace ranges;
@@ -44,6 +46,7 @@ int main()
         CHECK(v.index() == 0u);
     }
 
+#if 0
     // variant of void
     {
         variant<void, void> v;
@@ -73,12 +76,13 @@ int main()
             CHECK(!(bool)"unknown exception");
         }
     }
+#endif
 
     // variant of references
     {
         int i = 42;
         std::string s = "hello world";
-        variant<int&, std::string&> v{emplaced_index<0>, i};
+        variant<int&, std::string&> v{in_place<0>, i};
         CONCEPT_ASSERT(!DefaultConstructible<variant<int&, std::string&>>());
         CHECK(v.index() == 0u);
         CHECK(get<0>(v) == 42);
@@ -96,7 +100,7 @@ int main()
 
     // Move test 1
     {
-        variant<int, MoveOnlyString> v{emplaced_index<1>, "hello world"};
+        variant<int, MoveOnlyString> v{in_place<1>, "hello world"};
         CHECK(get<1>(v) == "hello world");
         MoveOnlyString s = get<1>(std::move(v));
         CHECK(s == "hello world");
@@ -114,7 +118,7 @@ int main()
     // Move test 2
     {
         MoveOnlyString s = "hello world";
-        variant<MoveOnlyString&> v{emplaced_index<0>, s};
+        variant<MoveOnlyString&> v{in_place<0>, s};
         CHECK(get<0>(v) == "hello world");
         MoveOnlyString &s2 = get<0>(std::move(v));
         CHECK(&s2 == &s);
@@ -122,45 +126,43 @@ int main()
 
     // Apply test 1
     {
-        std::stringstream sout;
-        variant<int, std::string> v{emplaced_index<1>, "hello"};
+        using V = ranges::variant<int, std::string>;
+        enum { is_int, is_string };
         auto fun = overload(
-            [&sout](int&) {sout << "int";},
-            [&sout](std::string&)->int {sout << "string"; return 42;});
-        variant<void, int> x = v.visit(fun);
-        CHECK(sout.str() == "string");
-        CHECK(x.index() == 1u);
-        CHECK(get<1>(x) == 42);
+            [&](int && i) { CHECK(i == 42); return is_int; },
+            [&](std::string && s) { CHECK(s == "hello"); return is_string; });
+        CHECK(ranges::visit(fun, V{in_place<1>, "hello"}) == is_string);
+        CHECK(ranges::visit(fun, V{in_place<0>, 42}) == is_int);
     }
 
     // Apply test 2
     {
-        std::stringstream sout;
-        std::string s = "hello";
-        variant<int, std::string&> const v{emplaced_index<1>, s};
+        using V = ranges::variant<int, std::string>;
+        enum { is_int, is_string };
         auto fun = overload(
-            [&sout](int const&) {sout << "int";},
-            [&sout](std::string&)->int {sout << "string"; return 42;});
-        variant<void, int> x = v.visit(fun);
-        CHECK(sout.str() == "string");
-        CHECK(x.index() == 1u);
-        CHECK(get<1>(x) == 42);
+            [&](int const &i) { CHECK(i == 42); return is_int; },
+            [&](std::string const &s) { CHECK(s == "hello"); return is_string; });
+        CHECK(ranges::visit(fun, V{in_place<1>, "hello"}) == is_string);
+        CHECK(ranges::visit(fun, V{in_place<0>, 42}) == is_int);
+        { const V v{in_place<1>, "hello"}; CHECK(ranges::visit(fun, v) == is_string); }
+        { const V v{in_place<0>, 42}; CHECK(ranges::visit(fun, v) == is_int); }
     }
 
     // constexpr variant
     {
-        constexpr variant<int, short> v{emplaced_index<1>, (short)2};
-        static_assert(v.index() == 1,"");
-        static_assert(v.valid(),"");
+        constexpr variant<int, short> v{in_place<1>, (short)2};
+        STATIC_ASSERT(!v.valueless_by_exception());
+        STATIC_ASSERT(v.index() == 1);
     }
 
+#if 0
     // Variant and arrays
     {
-        variant<int[5], std::vector<int>> v{emplaced_index<0>, {1,2,3,4,5}};
+        variant<int[5], std::vector<int>> v{in_place<0>, {1,2,3,4,5}};
         int (&rgi)[5] = get<0>(v);
         check_equal(rgi, {1,2,3,4,5});
 
-        variant<int[5], std::vector<int>> v2{emplaced_index<0>, {}};
+        variant<int[5], std::vector<int>> v2{in_place<0>, {}};
         int (&rgi2)[5] = get<0>(v2);
         check_equal(rgi2, {0,0,0,0,0});
 
@@ -176,9 +178,10 @@ int main()
         };
 
         // Should compile and not assert at runtime.
-        variant<T[5]> vrgt{emplaced_index<0>, {T{42},T{42},T{42},T{42},T{42}}};
+        variant<T[5]> vrgt{in_place<0>, {T{42},T{42},T{42},T{42},T{42}}};
         (void) vrgt;
     }
+#endif
 
     return ::test_result();
 }
