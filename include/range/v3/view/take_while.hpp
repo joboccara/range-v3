@@ -32,16 +32,93 @@ namespace ranges
 {
     inline namespace v3
     {
+        template<typename F, typename>
+        struct function_wrapper
+        {
+            F f_;
+
+            template<typename... Args>
+            RANGES_CXX14_CONSTEXPR auto operator()(Args &&... args) &
+                noexcept(noexcept(std::declval<F&>()(std::declval<Args>()...)))
+                -> decltype(std::declval<F&>()(std::declval<Args>()...))
+            {
+                return f_((Args &&)args...);
+            }
+            template<typename... Args>
+            constexpr auto operator()(Args &&... args) const&
+                noexcept(noexcept(std::declval<F const&>()(std::declval<Args>()...)))
+                -> decltype(std::declval<F const&>()(std::declval<Args>()...))
+            {
+                return f_((Args &&)args...);
+            }
+            template<typename... Args>
+            RANGES_CXX14_CONSTEXPR auto operator()(Args &&... args) &&
+                noexcept(noexcept(std::declval<F&&>()(std::declval<Args>()...)))
+                -> decltype(std::declval<F&&>()(std::declval<Args>()...))
+            {
+                return detail::move(f_)((Args &&)args...);
+            }
+            template<typename... Args>
+            RANGES_CXX14_CONSTEXPR auto operator()(Args &&... args) const&&
+                noexcept(noexcept(std::declval<F const&&>()(std::declval<Args>()...)))
+                -> decltype(std::declval<F const&&>()(std::declval<Args>()...))
+            {
+                return detail::move(f_)((Args &&)args...);
+            }
+        };
+
+        struct regular_function_tag {};
+        template<typename F,
+            CONCEPT_REQUIRES_(Constructible<detail::decay_t<F>, F&&>())>
+        constexpr function_wrapper<detail::decay_t<F>, regular_function_tag>
+        regular_function(F && f)
+        {
+            return {(F &&)f};
+        }
+
+        struct non_regular_function_tag {};
+        template<typename F,
+            CONCEPT_REQUIRES_(Constructible<detail::decay_t<F>, F&&>())>
+        function_wrapper<detail::decay_t<F>, non_regular_function_tag>
+        non_regular_function(F && f)
+        {
+            return {(F &&)f};
+        }
+
+        template<typename F, typename... Args>
+        struct is_regular_function
+          : Callable<F const, Args...>
+        {};
+        template<typename F, typename... Args>
+        struct is_regular_function<function_wrapper<F, regular_function_tag>, Args...>
+          : std::true_type
+        {};
+        template<typename F, typename... Args>
+        struct is_regular_function<function_wrapper<F, non_regular_function_tag>, Args...>
+          : std::false_type
+        {};
+        template<typename F, typename... Iterators>
+        struct is_regular_function<indirected<F>, Iterators...>
+          : is_regular_function<F, iterator_reference_t<Iterators>...>
+        {};
+
         /// \addtogroup group-views
         /// @{
+        template<typename Rng, typename Pred,
+            bool = is_regular_function<Pred, range_iterator_t<Rng>>::value>
+        struct iter_take_while_view;
+
         template<typename Rng, typename Pred>
-        struct iter_take_while_view
+        struct iter_take_while_view<Rng, Pred, true>
           : view_adaptor<
-                iter_take_while_view<Rng, Pred>,
+                iter_take_while_view<Rng, Pred, true>,
                 Rng,
                 is_finite<Rng>::value ? finite : unknown>
         {
         private:
+            CONCEPT_ASSERT(InputRange<Rng>());
+            CONCEPT_ASSERT(Predicate<Pred, range_iterator_t<Rng>>());
+
             friend range_access;
             semiregular_t<function_type<Pred>> pred_;
 
@@ -56,7 +133,7 @@ namespace ranges
                 sentinel_adaptor(semiregular_ref_or_val_t<function_type<Pred>, IsConst> pred)
                   : pred_(std::move(pred))
                 {}
-                bool empty(range_iterator_t<Rng> it, range_sentinel_t<Rng> end) const
+                bool empty(range_iterator_t<Rng> const &it, range_sentinel_t<Rng> const &end) const
                 {
                     return it == end || !pred_(it);
                 }
@@ -76,6 +153,75 @@ namespace ranges
               : iter_take_while_view::view_adaptor{std::move(rng)}
               , pred_(as_function(std::move(pred)))
             {}
+        };
+
+        template<typename Rng, typename Pred>
+        struct iter_take_while_view<Rng, Pred, false>
+          : view_facade<
+                iter_take_while_view<Rng, Pred, false>,
+                is_finite<Rng>::value ? finite : unknown>
+        {
+        private:
+            CONCEPT_ASSERT(InputRange<Rng>());
+            CONCEPT_ASSERT(Predicate<Pred, range_iterator_t<Rng>>());
+
+            friend range_access;
+
+            mutable Rng rng_;
+            mutable semiregular_t<function_type<Pred>> pred_;
+            mutable range_iterator_t<Rng> it_;
+            mutable bool done_ = false;
+
+            struct cursor
+            {
+            private:
+                iter_take_while_view const* rng_ = nullptr;
+            public:
+                using value_type = range_value_t<Rng>;
+                cursor() = default;
+                cursor(iter_take_while_view const &rng)
+                  : rng_(&rng)
+                {}
+                range_reference_t<Rng> get() const
+                {
+                    RANGES_ASSERT(rng_);
+                    RANGES_ASSERT(!rng_->done_);
+                    return *rng_->it_;
+                }
+                void next()
+                {
+                    RANGES_ASSERT(rng_);
+                    rng_->next();
+                }
+                bool done() const
+                {
+                    RANGES_ASSERT(rng_);
+                    return rng_->done_;
+                }
+            };
+            void at_end() const
+            {
+                done_ = it_ == ranges::end(rng_) || !pred_(it_);
+            }
+            cursor begin_cursor() const
+            {
+                return {*this};
+            }
+            void next() const
+            {
+                RANGES_ASSERT(!done_);
+                ++it_;
+                at_end();
+            }
+        public:
+            iter_take_while_view() = default;
+            iter_take_while_view(Rng rng, Pred pred)
+              : rng_(std::move(rng))
+              , pred_(as_function(std::move(pred)))
+              , it_(ranges::begin(rng_))
+            {
+                at_end();
+            }
         };
 
         template<typename Rng, typename Pred>

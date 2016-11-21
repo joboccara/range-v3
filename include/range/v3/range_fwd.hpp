@@ -666,18 +666,6 @@ namespace ranges
             struct take_exactly_fn;
         }
 
-        template<typename Rng, typename Pred>
-        struct iter_take_while_view;
-
-        template<typename Rng, typename Pred>
-        struct take_while_view;
-
-        namespace view
-        {
-            struct iter_take_while_fn;
-            struct take_while_fn;
-        }
-
         template<typename Rng, typename Regex, typename SubMatchRange>
         struct tokenize_view;
 
