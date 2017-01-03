@@ -19,6 +19,7 @@
 #include <range/v3/begin_end.hpp>
 #include <range/v3/range_concepts.hpp>
 #include <range/v3/range_traits.hpp>
+#include <range/v3/detail/optional.hpp>
 #include <range/v3/utility/iterator_concepts.hpp>
 #include <range/v3/utility/iterator_traits.hpp>
 #include <range/v3/utility/functional.hpp>
@@ -64,8 +65,7 @@ namespace ranges
             impl(I1 begin1, S1 end1, I2 begin2, S2 end2, R pred, P proj,
                  concepts::ForwardIterator*, concepts::ForwardIterator*)
             {
-                bool found = false;
-                I1 res;
+                optional<I1> res;
                 if(begin2 == end2)
                     return ranges::next(begin1, end1);
                 while(true)
@@ -73,7 +73,7 @@ namespace ranges
                     while(true)
                     {
                         if(begin1 == end1)
-                            return found ? res : begin1;
+                            return std::move(res ? *res : begin1);
                         if(invoke(pred, invoke(proj, *begin1), *begin2))
                             break;
                         ++begin1;
@@ -84,12 +84,12 @@ namespace ranges
                     {
                         if(++tmp2 == end2)
                         {
-                            res = begin1++;
-                            found = true;
+                            res = begin1;
+                            ++begin1;
                             break;
                         }
                         if(++tmp1 == end1)
-                            return found ? res : tmp1;
+                            return std::move(res ? *res : tmp1);
                         if(!invoke(pred, invoke(proj, *tmp1), *tmp2))
                         {
                             ++begin1;

@@ -136,7 +136,6 @@ namespace ranges
                     range_access::set(*cur_, (T &&) t);
                 }
             public:
-                basic_proxy_reference() = default;
                 basic_proxy_reference(basic_proxy_reference const &) = default;
                 template<typename OtherCur,
                     CONCEPT_REQUIRES_(ConvertibleTo<OtherCur*, Cur*>())>
@@ -283,11 +282,7 @@ namespace ranges
         template<typename T>
         struct basic_mixin : private box<T>
         {
-            CONCEPT_REQUIRES(DefaultConstructible<T>())
-            constexpr basic_mixin()
-                noexcept(std::is_nothrow_default_constructible<T>::value)
-              : box<T>{}
-            {}
+            constexpr basic_mixin() = default;
             CONCEPT_REQUIRES(MoveConstructible<T>())
             constexpr basic_mixin(T &&t)
                 noexcept(std::is_nothrow_move_constructible<T>::value)

@@ -171,7 +171,6 @@ namespace ranges
                 CONCEPT_REQUIRES_(Sentinel<S, I>())>
             constexpr iterator_range<I, S> operator()(I begin, S end) const
             {
-                CONCEPT_ASSERT(Sentinel<S, I>());
                 return {detail::move(begin), detail::move(end)};
             }
 
@@ -180,7 +179,6 @@ namespace ranges
                 CONCEPT_REQUIRES_(Sentinel<S, I>())>
             constexpr sized_iterator_range<I, S> operator()(I begin, S end, iterator_size_t<I> size) const
             {
-                CONCEPT_ASSERT(Sentinel<S, I>());
                 return {detail::move(begin), detail::move(end), size};
             }
         };

@@ -265,8 +265,7 @@ namespace ranges
         {
             static Element value;
         public:
-            constexpr box() noexcept
-            {}
+            constexpr box() noexcept = default;
             template<typename E,
                 CONCEPT_REQUIRES_(std::is_constructible<Element, E>::value && std::is_convertible<E, Element>::value)>
             constexpr box(E &&) noexcept
@@ -291,7 +290,7 @@ namespace ranges
         };
 
         template<typename Element, typename Tag>
-        Element box<Element, Tag, detail::box_compress::coalesce>::value;
+        Element box<Element, Tag, detail::box_compress::coalesce>::value{};
 
         // Get by tag type
         template<typename Tag, typename Element, detail::box_compress BC>

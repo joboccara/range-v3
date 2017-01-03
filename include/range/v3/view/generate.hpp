@@ -49,7 +49,6 @@ namespace ranges
                 generate_view *view_;
             public:
                 using single_pass = std::true_type;
-                cursor() = default;
                 cursor(generate_view &view)
                   : view_(&view)
                 {}
@@ -75,7 +74,6 @@ namespace ranges
                 return {};
             }
         public:
-            generate_view() = default;
             explicit generate_view(G g)
               : gen_(std::move(g)), val_(gen_())
             {}

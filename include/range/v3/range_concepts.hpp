@@ -210,7 +210,7 @@ namespace ranges
                 template<typename T>
                 auto requires_(T&&) -> decltype(
                     concepts::valid_expr(
-                        concepts::model_of<SemiRegular, uncvref_t<T>>(),
+                        concepts::model_of<Copyable, uncvref_t<T>>(),
                         concepts::is_true(is_view<T>())
                     ));
             };

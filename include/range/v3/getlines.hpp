@@ -32,7 +32,7 @@ namespace ranges
         private:
             friend range_access;
             std::istream *sin_;
-            std::string str_;
+            std::string str_= {};
             char delim_;
             struct cursor
             {
@@ -69,9 +69,8 @@ namespace ranges
                 return cursor{*this};
             }
         public:
-            getlines_range() = default;
             getlines_range(std::istream &sin, char delim = '\n')
-              : sin_(&sin), str_{}, delim_(delim)
+              : sin_(&sin), delim_(delim)
             {
                 this->next(); // prime the pump
             }

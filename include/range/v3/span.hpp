@@ -55,7 +55,9 @@ namespace ranges
             public:
                 CONCEPT_ASSERT(0 <= N);
 
-                span_base() = default;
+                CONCEPT_REQUIRES(N == 0)
+                constexpr span_base() noexcept
+                {}
                 constexpr span_base(T* ptr, std::ptrdiff_t size) noexcept
                   : ptr_{(RANGES_EXPECT(ptr || !N), RANGES_EXPECT(size == N), ptr)}
                 {}
@@ -116,9 +118,9 @@ namespace ranges
             static constexpr index_type extent = N;
 
             // [span.cons], span constructors, copy, assignment, and destructor
-            constexpr span() noexcept = default;
+            span() = default;
+            CONCEPT_REQUIRES(DefaultConstructible<detail::span_base<T, N>>())
             constexpr span(std::nullptr_t) noexcept
-              : span{}
             {}
             constexpr span(pointer ptr, index_type count) noexcept
               : storage_{ptr, count}

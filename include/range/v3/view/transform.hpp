@@ -73,7 +73,7 @@ namespace ranges
                 fun_ref_ fun_;
             public:
                 using value_type =
-                    detail::decay_t<result_of_t<Fun&(copy_tag, range_iterator_t<Rng> &&)>>;
+                    detail::decay_t<result_of_t<Fun&(copy_tag, range_iterator_t<Rng>)>>;
                 adaptor() = default;
                 adaptor(fun_ref_ fun)
                   : fun_(std::move(fun))

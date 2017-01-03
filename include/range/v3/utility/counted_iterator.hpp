@@ -87,7 +87,7 @@ namespace ranges
                 };
 
                 I it_;
-                D n_;
+                D n_ = {};
 
                 // Overload the advance algorithm for counted_iterators.
                 // This is much faster. This gets found by ADL because
@@ -100,7 +100,7 @@ namespace ranges
                 }
                 // Overload uncounted and recounted for packing and unpacking
                 // counted iterators
-                friend I uncounted(counted_iterator<I, D> i)
+                friend I uncounted(counted_iterator<I, D> const &i)
                 {
                     return i.base();
                 }
@@ -169,9 +169,7 @@ namespace ranges
                     return n_;
                 }
             public:
-                counted_cursor()
-                  : it_{}, n_{}
-                {}
+                counted_cursor() = default;
                 counted_cursor(I it, D n)
                   : it_(std::move(it)), n_(n)
                 {}

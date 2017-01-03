@@ -32,7 +32,6 @@ namespace ranges
             struct movable_input_iterator
               : std::iterator<std::input_iterator_tag, T, std::ptrdiff_t, T *, T &&>
             {
-                movable_input_iterator() = default;
                 movable_input_iterator &operator++();
                 movable_input_iterator operator++(int);
                 bool operator==(movable_input_iterator const &) const;

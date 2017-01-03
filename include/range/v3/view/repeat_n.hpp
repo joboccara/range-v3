@@ -42,7 +42,7 @@ namespace ranges
         private:
             friend range_access;
             Val value_;
-            std::ptrdiff_t n_;
+            std::ptrdiff_t n_ = 0;
 
             struct cursor
             {
@@ -104,19 +104,19 @@ namespace ranges
             struct repeat_n_fn
             {
                 template<typename Val,
-                    CONCEPT_REQUIRES_(SemiRegular<Val>())>
+                    CONCEPT_REQUIRES_(Copyable<Val>())>
                 repeat_n_view<Val> operator()(Val value, std::ptrdiff_t n) const
                 {
                     return repeat_n_view<Val>{std::move(value), n};
                 }
             #ifndef RANGES_DOXYGEN_INVOKED
                 template<typename Val,
-                    CONCEPT_REQUIRES_(!SemiRegular<Val>())>
+                    CONCEPT_REQUIRES_(!Copyable<Val>())>
                 void operator()(Val, std::ptrdiff_t) const
                 {
-                    CONCEPT_ASSERT_MSG(SemiRegular<Val>(),
-                        "The value passed to view::repeat_n must be SemiRegular; that is, it needs "
-                        "to be default constructable, copy and move constructable, and destructable.");
+                    CONCEPT_ASSERT_MSG(Copyable<Val>(),
+                        "The value passed to view::repeat_n must be Copyable; that is, it needs "
+                        "to be copy and move constructible and assignable, and destructible.");
                 }
             #endif
             };

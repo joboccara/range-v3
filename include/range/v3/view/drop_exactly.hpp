@@ -48,7 +48,7 @@ namespace ranges
             friend range_access;
             using difference_type_ = range_difference_t<Rng>;
             Rng rng_;
-            difference_type_ n_;
+            difference_type_ n_ = 0;
 
             // RandomAccessRange == true
             range_iterator_t<Rng> get_begin_(std::true_type) const

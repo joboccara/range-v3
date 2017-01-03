@@ -68,8 +68,8 @@ namespace ranges
                 template<typename T>
                 auto requires_(T&& t) -> decltype(
                     concepts::valid_expr(
-                        concepts::model_of<concepts::SemiRegular, T>(),
-                        concepts::model_of<concepts::SemiRegular, mixin_base_t<T>>(),
+                        concepts::model_of<concepts::Copyable, T>(),
+                        concepts::model_of<concepts::Copyable, mixin_base_t<T>>(),
                         concepts::model_of<concepts::Constructible, mixin_base_t<T>, T &&>(),
                         concepts::model_of<concepts::Constructible, mixin_base_t<T>, T const &>()
                     ));
@@ -83,7 +83,7 @@ namespace ranges
                     ));
             };
             struct CursorSentinel
-              : concepts::refines<concepts::SemiRegular(concepts::_1), Cursor(concepts::_2)>
+              : concepts::refines<concepts::Copyable(concepts::_1), Cursor(concepts::_2)>
             {
                 template<typename S, typename C>
                 auto requires_(S && s, C && c) -> decltype(
@@ -128,6 +128,7 @@ namespace ranges
                 template<typename T>
                 auto requires_(T&& t) -> decltype(
                     concepts::valid_expr(
+                        concepts::model_of<concepts::DefaultConstructible, uncvref_t<T>>(),
                         concepts::is_false(single_pass_t<uncvref_t<T>>())
                     ));
             };
@@ -296,7 +297,7 @@ namespace ranges
             using cursor_value_t = typename cursor_value<Cur>::type;
 
             template<typename BI,
-                CONCEPT_REQUIRES_(meta::is<meta::_t<std::decay<BI>>, basic_iterator>())>
+                CONCEPT_REQUIRES_(meta::is<detail::decay_t<BI>, basic_iterator>())>
             static RANGES_CXX14_CONSTEXPR auto pos(BI&& it)
             RANGES_DECLTYPE_AUTO_RETURN_NOEXCEPT(
                 std::forward<BI>(it).pos()

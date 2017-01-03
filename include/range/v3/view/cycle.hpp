@@ -90,9 +90,7 @@ namespace ranges
                         end_ = it_;
                 }
             public:
-                cursor()
-                  : rng_{}, it_{}
-                {}
+                cursor() = default;
                 explicit cursor(cycled_view_t &rng)
                   : rng_(&rng), it_(ranges::begin(rng.rng_))
                 {}

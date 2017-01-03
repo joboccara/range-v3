@@ -92,19 +92,19 @@ namespace ranges
             struct repeat_fn
             {
                 template<typename Val,
-                    CONCEPT_REQUIRES_(SemiRegular<Val>())>
+                    CONCEPT_REQUIRES_(Copyable<Val>())>
                 repeat_view<Val> operator()(Val value) const
                 {
                     return repeat_view<Val>{std::move(value)};
                 }
             #ifndef RANGES_DOXYGEN_INVOKED
                 template<typename Val,
-                    CONCEPT_REQUIRES_(!SemiRegular<Val>())>
+                    CONCEPT_REQUIRES_(!Copyable<Val>())>
                 void operator()(Val) const
                 {
-                    CONCEPT_ASSERT_MSG(SemiRegular<Val>(),
-                        "The value passed to view::repeat must be SemiRegular; that is, it needs "
-                        "to be default constructable, copy and move constructable, and destructable.");
+                    CONCEPT_ASSERT_MSG(Copyable<Val>(),
+                        "The value passed to view::repeat must be Copyable; that is, it needs "
+                        "to be copy and move constructible and assignable, and destructible.");
                 }
             #endif
             };

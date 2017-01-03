@@ -60,7 +60,7 @@ namespace ranges
             }
             adaptor end_adaptor() const
             {
-                return{};
+                return {};
             }
         public:
             indirect_view() = default;
@@ -81,7 +81,7 @@ namespace ranges
                 template<typename Rng>
                 using Concept = meta::and_<
                     InputRange<Rng>,
-                    // Stricter than necessary because of the SemiRegular requirement,
+                    // Stricter than necessary because of the Copyable requirement,
                     // but maybe that's ok?
                     Readable<range_value_t<Rng>>>;
 

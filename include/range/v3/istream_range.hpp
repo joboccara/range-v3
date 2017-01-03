@@ -77,7 +77,6 @@ namespace ranges
               : sin_(&sin), obj_{in_place}
             {}
         public:
-            istream_range() = default;
             istream_range(std::istream &sin)
               : istream_range(sin, _nullptr_v<semiregular_t<Val>>())
             {

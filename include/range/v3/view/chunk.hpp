@@ -79,7 +79,7 @@ namespace ranges
         {
         private:
             range_difference_t<Rng> n_;
-            range_sentinel_t<Rng> end_;
+            semiregular_t<range_sentinel_t<Rng>> end_;
             offset_t & offset() {return this->box<offset_t>::get();}
             offset_t const & offset() const {return this->box<offset_t>::get();}
         public:
@@ -90,19 +90,18 @@ namespace ranges
             auto get(range_iterator_t<Rng> it) const ->
                 decltype(view::take(make_iterator_range(std::move(it), end_), n_))
             {
-                RANGES_EXPECT(it != end_);
-                RANGES_EXPECT(0 == offset());
+                RANGES_EXPECT(it != end_ && 0 == offset());
                 return view::take(make_iterator_range(std::move(it), end_), n_);
             }
             void next(range_iterator_t<Rng> &it)
             {
-                RANGES_EXPECT(it != end_);
-                RANGES_EXPECT(0 == offset());
+                RANGES_EXPECT(it != end_ && 0 == offset());
                 offset() = ranges::advance(it, n_, end_);
             }
             CONCEPT_REQUIRES(BidirectionalRange<Rng>())
             void prev(range_iterator_t<Rng> &it)
             {
+                RANGES_EXPECT(it == end_ || 0 == offset());
                 ranges::advance(it, -n_ + offset());
                 offset() = 0;
             }
@@ -111,17 +110,29 @@ namespace ranges
             range_difference_t<Rng> distance_to(range_iterator_t<Rng> const &here,
                 range_iterator_t<Rng> const &there, adaptor const &that) const
             {
-                // This assertion is true for all range types except cyclic ranges:
-                //RANGES_EXPECT(0 == ((there - here) + that.offset() - offset()) % n_);
-                return ((there - here) + that.offset() - offset()) / n_;
+                RANGES_EXPECT(here == end_ || 0 == offset());
+                RANGES_EXPECT(there == end_ || 0 == that.offset());
+                auto underlying_distance = there - here + that.offset() - offset();
+                // This assertion holds for ranges with no iterator cycles.
+                // For such ranges, the domain of "-" does not include all
+                // possible pairs of iterator values unless the chunk size
+                // divides the cycle size.
+                RANGES_ASSERT(0 == underlying_distance % n_);
+                return underlying_distance / n_;
             }
             CONCEPT_REQUIRES(RandomAccessRange<Rng>())
             void advance(range_iterator_t<Rng> &it, range_difference_t<Rng> n)
             {
+                RANGES_EXPECT(it == end_ || 0 == offset());
                 if(0 < n)
+                {
                     offset() = ranges::advance(it, n * n_ + offset(), end_);
+                }
                 else if(0 > n)
-                    offset() = (ranges::advance(it, n * n_ + offset()), 0);
+                {
+                    ranges::advance(it, n * n_ + offset());
+                    offset() = 0;
+                }
             }
         };
 

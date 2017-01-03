@@ -61,7 +61,7 @@ namespace ranges
                 using single_pass = partial_sum_view::single_pass;
                 adaptor() = default;
                 adaptor(partial_sum_view_t &rng)
-                  : sum_{}, rng_(&rng)
+                  : rng_(&rng)
                 {}
                 adaptor(partial_sum_view_t &rng, range_value_t<Rng> sum)
                   : sum_(std::move(sum)), rng_(&rng)
@@ -88,9 +88,7 @@ namespace ranges
             }
             meta::if_<use_sentinel_t, adaptor_base, adaptor<false>> end_adaptor()
             {
-                if(use_sentinel_t() || empty(this->base()))
-                    return {*this};
-                return {*this, front(this->base())};
+                return {*this};
             }
             CONCEPT_REQUIRES(Invocable<Fun const&, range_common_reference_t<Rng>,
                 range_common_reference_t<Rng>>())
@@ -103,12 +101,9 @@ namespace ranges
                 range_common_reference_t<Rng>>())
             meta::if_<use_sentinel_t, adaptor_base, adaptor<true>> end_adaptor() const
             {
-                if(use_sentinel_t() || empty(this->base()))
-                    return {*this};
-                return {*this, front(this->base())};
+                return {*this};
             }
         public:
-            partial_sum_view() = default;
             partial_sum_view(Rng rng, Fun fun)
               : partial_sum_view::view_adaptor{std::move(rng)}
               , fun_(std::move(fun))

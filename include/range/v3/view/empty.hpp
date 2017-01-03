@@ -32,7 +32,7 @@ namespace ranges
             {
                 [[noreturn]] T const & get() const
                 {
-                    RANGES_ENSURE(false);
+                    RANGES_EXPECT(false);
                 }
                 constexpr bool equal(default_sentinel) const
                 {
@@ -44,11 +44,11 @@ namespace ranges
                 }
                 [[noreturn]] void next()
                 {
-                    RANGES_ENSURE(false);
+                    RANGES_EXPECT(false);
                 }
                 [[noreturn]] void prev()
                 {
-                    RANGES_ENSURE(false);
+                    RANGES_EXPECT(false);
                 }
                 void advance(std::ptrdiff_t n)
                 {

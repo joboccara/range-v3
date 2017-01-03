@@ -77,9 +77,8 @@ namespace ranges
                 return {*this};
             }
         public:
-            generate_n_view() = default;
             explicit generate_n_view(G g, std::size_t n)
-              : gen_(std::move(g)), val_{}, n_(n)
+              : gen_(std::move(g)), n_(n)
             {
                 if(0 != n)
                     next();

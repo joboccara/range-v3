@@ -47,41 +47,47 @@ namespace ranges
         {
         private:
             friend range_access;
+            using use_sentinel_t =
+                meta::or_<meta::not_<BoundedRange<Rng>>, SinglePass<range_iterator_t<Rng>>>;
+
             semiregular_t<Pred> pred_;
             detail::non_propagating_cache<range_iterator_t<Rng>> begin_;
 
+            void satisfy(range_iterator_t<Rng> &it)
+            {
+                it = find_if_not(std::move(it), ranges::end(this->base()), std::ref(pred_));
+            }
+            range_iterator_t<Rng> get_begin()
+            {
+                if(!begin_)
+                {
+                    begin_ = ranges::begin(this->base());
+                    satisfy(*begin_);
+                }
+                return *begin_;
+            }
             struct adaptor
               : adaptor_base
             {
             private:
                 remove_if_view *rng_;
-                void satisfy(range_iterator_t<Rng> &it) const
-                {
-                    it = find_if_not(std::move(it), ranges::end(rng_->mutable_base()),
-                        std::ref(rng_->pred_));
-                }
             public:
                 adaptor() = default;
                 adaptor(remove_if_view &rng)
                   : rng_(&rng)
                 {}
-                range_iterator_t<Rng> begin(remove_if_view &) const
+                static range_iterator_t<Rng> begin(remove_if_view &rng)
                 {
-                    auto &beg = rng_->begin_;
-                    if(!beg)
-                    {
-                        beg = ranges::begin(rng_->mutable_base());
-                        this->satisfy(*beg);
-                    }
-                    return *beg;
+                    return rng.get_begin();
                 }
                 void next(range_iterator_t<Rng> &it) const
                 {
-                    this->satisfy(++it);
+                    rng_->satisfy(++it);
                 }
                 CONCEPT_REQUIRES(BidirectionalRange<Rng>())
                 void prev(range_iterator_t<Rng> &it) const
                 {
+                    RANGES_EXPECT(it != rng_->get_begin());
                     auto &pred = rng_->pred_;
                     do --it; while(invoke(pred, *it));
                 }
@@ -92,14 +98,11 @@ namespace ranges
             {
                 return {*this};
             }
-            // TODO: if end is a sentinel, it holds an unnecessary pointer back to
-            // this range.
-            adaptor end_adaptor()
+            meta::if_<use_sentinel_t, adaptor_base, adaptor> end_adaptor()
             {
                 return {*this};
             }
         public:
-            remove_if_view() = default;
             remove_if_view(Rng rng, Pred pred)
               : remove_if_view::view_adaptor{std::move(rng)}
               , pred_(std::move(pred))

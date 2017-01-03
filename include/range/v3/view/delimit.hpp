@@ -79,13 +79,14 @@ namespace ranges
                     make_pipeable(std::bind(delimit, std::placeholders::_1, std::move(value)))
                 )
             public:
-                template<typename Rng, typename Val>
+                template<typename I, typename Val>
                 using Concept = meta::and_<
-                    Range<Rng>,
-                    EqualityComparable<Val, range_common_reference_t<Rng>>>;
+                    InputIterator<I>,
+                    Copyable<Val>,
+                    EqualityComparable<Val, iterator_reference_t<I>>>;
 
                 template<typename Rng, typename Val,
-                    CONCEPT_REQUIRES_(Concept<Rng, Val>())>
+                    CONCEPT_REQUIRES_(Concept<range_iterator_t<Rng>, Val>())>
                 delimit_view<all_t<Rng>, Val>
                 operator()(Rng && rng, Val value) const
                 {
@@ -93,13 +94,14 @@ namespace ranges
                 }
             #ifndef RANGES_DOXYGEN_INVOKED
                 template<typename Rng, typename Val,
-                    CONCEPT_REQUIRES_(!Concept<Rng, Val>())>
-                void
-                operator()(Rng &&, Val) const
+                    CONCEPT_REQUIRES_(!Concept<range_iterator_t<Rng>, Val>())>
+                void operator()(Rng &&, Val) const
                 {
                     CONCEPT_ASSERT_MSG(Range<Rng>(),
                         "Rng must model the Range concept");
-                    CONCEPT_ASSERT_MSG(EqualityComparable<Val, range_common_reference_t<Rng>>(),
+                    CONCEPT_ASSERT_MSG(Copyable<Val>(),
+                        "Val must model the Copyable concept");
+                    CONCEPT_ASSERT_MSG(EqualityComparable<Val, range_reference_t<Rng>>(),
                         "The delimiting value type must be EqualityComparable to the "
                         "range's common reference type.");
                 }
@@ -110,12 +112,13 @@ namespace ranges
             {
                 using view<delimit_impl_fn>::operator();
 
-                template<typename I, typename Val,
-                    CONCEPT_REQUIRES_(InputIterator<I>())>
+                template<typename I_, typename Val,
+                    typename I = uncvref_t<I_>,
+                    CONCEPT_REQUIRES_(delimit_impl_fn::Concept<I, Val>())>
                 delimit_view<iterator_range<I, unreachable>, Val>
-                operator()(I begin, Val value) const
+                operator()(I_ && begin, Val value) const
                 {
-                    return {{std::move(begin), {}}, std::move(value)};
+                    return {{(I_ &&) begin, {}}, std::move(value)};
                 }
             };
 

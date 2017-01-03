@@ -134,7 +134,6 @@ namespace ranges
                 using value_type = range_value_t<Rng>;
                 using difference_type = D;
 
-                cursor() = default;
                 explicit cursor(sample_view const &rng)
                 : base_t{&rng, ranges::begin(rng.range()), rng.range()}
                 {
@@ -170,8 +169,6 @@ namespace ranges
             }
 
         public:
-            sample_view() = default;
-
             explicit sample_view(Rng rng, D sample_size, URNG& generator)
             : base_t{std::move(rng), sample_size, generator}
             {

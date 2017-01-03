@@ -144,7 +144,7 @@ namespace ranges
             {
             private:
                 friend view_access;
-                template<typename T, CONCEPT_REQUIRES_(SemiRegular<T>())>
+                template<typename T, CONCEPT_REQUIRES_(Copyable<T>())>
                 static auto bind(intersperse_fn intersperse, T t)
                 RANGES_DECLTYPE_AUTO_RETURN
                 (
@@ -156,7 +156,7 @@ namespace ranges
                     InputRange<Rng>,
                     ConvertibleTo<T, range_value_t<Rng>>,
                     ConvertibleTo<range_reference_t<Rng>, range_value_t<Rng>>,
-                    SemiRegular<range_value_t<Rng>>>;
+                    Copyable<range_value_t<Rng>>>;
 
                 template<typename Rng,
                     CONCEPT_REQUIRES_(Concept<Rng>())>
@@ -179,10 +179,10 @@ namespace ranges
                     CONCEPT_ASSERT_MSG(ConvertibleTo<range_reference_t<Rng>, range_value_t<Rng>>(),
                         "The range's reference type must be convertible to the range's "
                         "value type.");
-                    CONCEPT_ASSERT_MSG(SemiRegular<range_value_t<Rng>>(),
+                    CONCEPT_ASSERT_MSG(Copyable<range_value_t<Rng>>(),
                         "The range on which view::intersperse operates must have a value type that "
-                        "models the SemiRegular concept; that is, it must be default constructible, "
-                        "copy and move constructible, and destructible.");
+                        "models the Copyable concept; that is, it must be copy and move "
+                        "constructible and assignable, and destructible.");
                 }
             #endif
             };

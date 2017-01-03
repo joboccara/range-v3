@@ -109,11 +109,10 @@ namespace ranges
             {
             public:
                 CONCEPT_ASSERT(ForwardRange<Rng>());
-                sv_base() = default;
                 sv_base(Rng rng, range_difference_t<Rng> n)
                 : sv_base::view_adaptor(std::move(rng)), n_(n)
                 {
-                    RANGES_ASSERT(0 < n_);
+                    RANGES_EXPECT(0 < n_);
                 }
                 CONCEPT_REQUIRES(SizedRange<Rng const>())
                 range_size_t<Rng> size() const

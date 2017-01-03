@@ -134,7 +134,7 @@ namespace ranges
         namespace concepts
         {
             struct Readable
-              : refines<Movable, DefaultConstructible>
+              : refines<Movable>
             {
                 // Associated types
                 template<typename I>
@@ -166,7 +166,7 @@ namespace ranges
             };
 
             struct Writable
-              : refines<Movable(_1), DefaultConstructible(_1)>
+              : refines<Movable(_1)>
             {
                 template<typename Out, typename T>
                 auto requires_(Out && o, T && t) -> decltype(
@@ -241,7 +241,7 @@ namespace ranges
             };
 
             struct WeaklyIncrementable
-              : refines<SemiRegular>
+              : refines<Copyable>
             {
                 // Associated types
                 template<typename I>
@@ -267,7 +267,7 @@ namespace ranges
             };
 
             struct Iterator
-              : refines<WeaklyIncrementable, Copyable>
+              : refines<WeaklyIncrementable>
             {
                 template<typename I>
                 auto requires_(I&& i) -> decltype(
@@ -277,7 +277,7 @@ namespace ranges
             };
 
             struct Sentinel
-              : refines<SemiRegular(_1), Iterator(_2), WeaklyEqualityComparable>
+              : refines<Copyable(_1), Iterator(_2), WeaklyEqualityComparable>
             {};
 
             struct SizedSentinel
@@ -575,7 +575,7 @@ namespace ranges
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // Composite concepts for use defining algorithms:
-        template<typename I, typename V = concepts::Readable::value_t<I>>
+        template<typename I>
         using Permutable = meta::strict_and<
             ForwardIterator<I>,
             IndirectlySwappable<I, I>,

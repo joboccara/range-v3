@@ -27,12 +27,12 @@ namespace ranges
         {
             struct filter_fn
             {
-                template<typename Rng, typename Pred>
+                template<typename Rng, typename Pred,
+                    CONCEPT_REQUIRES_(Range<Rng>() &&
+                        IndirectPredicate<Pred, range_iterator_t<Rng>>())>
                 remove_if_view<all_t<Rng>, logical_negate<Pred>>
                 operator()(Rng && rng, Pred pred) const
                 {
-                    CONCEPT_ASSERT(Range<Rng>());
-                    CONCEPT_ASSERT(IndirectPredicate<Pred, range_iterator_t<Rng>>());
                     return {all(std::forward<Rng>(rng)), not_fn(std::move(pred))};
                 }
                 template<typename Pred>

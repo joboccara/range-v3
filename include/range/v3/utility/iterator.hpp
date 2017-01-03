@@ -450,8 +450,7 @@ namespace ranges
                       : basic_mixin<back_insert_cursor>{back_insert_cursor{cont}}
                     {}
                 };
-                Cont *cont_ = nullptr;
-                back_insert_cursor() = default;
+                Cont *cont_;
                 back_insert_cursor(Cont &cont) noexcept
                   : cont_(std::addressof(cont))
                 {}
@@ -497,8 +496,7 @@ namespace ranges
                       : basic_mixin<front_insert_cursor>{front_insert_cursor{cont}}
                     {}
                 };
-                Cont *cont_ = nullptr;
-                front_insert_cursor() = default;
+                Cont *cont_;
                 explicit front_insert_cursor(Cont &cont) noexcept
                   : cont_(std::addressof(cont))
                 {}
@@ -536,8 +534,8 @@ namespace ranges
             template<typename Cont>
             struct insert_cursor
             {
-                Cont *cont_ = nullptr;
-                typename Cont::iterator where_ = {};
+                Cont *cont_;
+                typename Cont::iterator where_;
                 struct mixin : basic_mixin<insert_cursor>
                 {
                     mixin() = default;
@@ -546,7 +544,6 @@ namespace ranges
                       : basic_mixin<insert_cursor>{insert_cursor{cont, std::move(where)}}
                     {}
                 };
-                insert_cursor() = default;
                 explicit insert_cursor(Cont &cont, typename Cont::iterator where) noexcept
                   : cont_(&cont), where_(where)
                 {}
@@ -585,7 +582,7 @@ namespace ranges
             {
                 using ostream_type = std::basic_ostream<Char, Traits>;
 
-                ostream_type *sout_ = nullptr;
+                ostream_type *sout_;
                 Char const *delim_ = nullptr;
 
                 struct mixin : protected basic_mixin<ostream_cursor>
@@ -603,7 +600,6 @@ namespace ranges
                     {}
                 };
 
-                ostream_cursor() = default;
                 constexpr ostream_cursor(ostream_type &sout,
                     Char const *delim = nullptr) noexcept
                   : sout_(std::addressof(sout)), delim_(delim)
@@ -789,9 +785,7 @@ namespace ranges
                     iter_move(it_)
                 )
             public:
-                constexpr move_cursor()
-                  : it_{}
-                {}
+                move_cursor() = default;
             };
         }
         /// \endcond
@@ -814,9 +808,7 @@ namespace ranges
         private:
             S sent_;
         public:
-            constexpr move_sentinel()
-              : sent_{}
-            {}
+            move_sentinel() = default;
             constexpr explicit move_sentinel(S s)
               : sent_(detail::move(s))
             {}
@@ -873,7 +865,7 @@ namespace ranges
             }
 
             template<typename S,
-                CONCEPT_REQUIRES_(SemiRegular<S>() && !InputIterator<S>())>
+                CONCEPT_REQUIRES_(Copyable<S>() && !InputIterator<S>())>
             constexpr move_sentinel<S> operator()(S s) const
             {
                 return move_sentinel<S>{detail::move(s)};
@@ -972,9 +964,7 @@ namespace ranges
                     return iter_move(it_);
                 }
             public:
-                constexpr move_into_cursor()
-                  : it_{}
-                {}
+                move_into_cursor() = default;
             };
         }
         /// \endcond
