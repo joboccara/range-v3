@@ -133,6 +133,8 @@ namespace meta
     {
         /// \endcond
 
+#define META_TLD ::meta::v1
+
         namespace detail
         {
             /// Returns a \p T nullptr
@@ -184,12 +186,12 @@ namespace meta
             /// \ingroup lazy_invocation
             template <typename T>
             using eval //META_DEPRECATED("Please replace meta::lazy::eval with meta::lazy::_t") =
-                = defer<eval, T>;
+                = defer<META_TLD::eval, T>;
 
             /// \sa `meta::_t`
             /// \ingroup lazy_invocation
             template <typename T>
-            using _t = defer<_t, T>;
+            using _t = defer<META_TLD::_t, T>;
         }
 
         /// An integral constant wrapper for \c std::size_t.
@@ -442,92 +444,92 @@ namespace meta
             /// \sa 'meta::int'
             /// \ingroup lazy_math
             template <typename T>
-            using inc = defer<inc, T>;
+            using inc = defer<META_TLD::inc, T>;
 
             /// \sa 'meta::dec'
             /// \ingroup lazy_math
             template <typename T>
-            using dec = defer<dec, T>;
+            using dec = defer<META_TLD::dec, T>;
 
             /// \sa 'meta::plus'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using plus = defer<plus, T, U>;
+            using plus = defer<META_TLD::plus, T, U>;
 
             /// \sa 'meta::minus'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using minus = defer<minus, T, U>;
+            using minus = defer<META_TLD::minus, T, U>;
 
             /// \sa 'meta::multiplies'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using multiplies = defer<multiplies, T, U>;
+            using multiplies = defer<META_TLD::multiplies, T, U>;
 
             /// \sa 'meta::divides'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using divides = defer<divides, T, U>;
+            using divides = defer<META_TLD::divides, T, U>;
 
             /// \sa 'meta::negate'
             /// \ingroup lazy_math
             template <typename T>
-            using negate = defer<negate, T>;
+            using negate = defer<META_TLD::negate, T>;
 
             /// \sa 'meta::modulus'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using modulus = defer<modulus, T, U>;
+            using modulus = defer<META_TLD::modulus, T, U>;
 
             /// \sa 'meta::equal_to'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using equal_to = defer<equal_to, T, U>;
+            using equal_to = defer<META_TLD::equal_to, T, U>;
 
             /// \sa 'meta::not_equal_t'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using not_equal_to = defer<not_equal_to, T, U>;
+            using not_equal_to = defer<META_TLD::not_equal_to, T, U>;
 
             /// \sa 'meta::greater'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using greater = defer<greater, T, U>;
+            using greater = defer<META_TLD::greater, T, U>;
 
             /// \sa 'meta::less'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using less = defer<less, T, U>;
+            using less = defer<META_TLD::less, T, U>;
 
             /// \sa 'meta::greater_equal'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using greater_equal = defer<greater_equal, T, U>;
+            using greater_equal = defer<META_TLD::greater_equal, T, U>;
 
             /// \sa 'meta::less_equal'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using less_equal = defer<less_equal, T, U>;
+            using less_equal = defer<META_TLD::less_equal, T, U>;
 
             /// \sa 'meta::bit_and'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using bit_and = defer<bit_and, T, U>;
+            using bit_and = defer<META_TLD::bit_and, T, U>;
 
             /// \sa 'meta::bit_or'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using bit_or = defer<bit_or, T, U>;
+            using bit_or = defer<META_TLD::bit_or, T, U>;
 
             /// \sa 'meta::bit_xor'
             /// \ingroup lazy_math
             template <typename T, typename U>
-            using bit_xor = defer<bit_xor, T, U>;
+            using bit_xor = defer<META_TLD::bit_xor, T, U>;
 
             /// \sa 'meta::bit_not'
             /// \ingroup lazy_math
             template <typename T>
-            using bit_not = defer<bit_not, T>;
+            using bit_not = defer<META_TLD::bit_not, T>;
         }
 
         /// Evaluate the Alias Class \p F with the arguments \p Args.
@@ -541,7 +543,7 @@ namespace meta
             /// \sa `meta::apply`
             /// \ingroup lazy_invocation
             template <typename F, typename... Args>
-            using apply = defer<apply, F, Args...>;
+            using apply = defer<META_TLD::apply, F, Args...>;
         }
 
         /// A Alias Class that always returns \p T.
@@ -574,7 +576,7 @@ namespace meta
             /// \sa `meta::always`
             /// \ingroup lazy_trait
             template <typename T>
-            using always = defer<always, T>;
+            using always = defer<META_TLD::always, T>;
         }
 
         /// \cond
@@ -677,26 +679,26 @@ namespace meta
         /// \f$ O(1) \f$.
         /// \ingroup trait
         template <class T>
-        using sizeof_ = meta::size_t<sizeof(T)>;
+        using sizeof_ = META_TLD::size_t<sizeof(T)>;
 
         /// An alias that computes the alignment required for any instance of the type \p T.
         /// \par Complexity
         /// \f$ O(1) \f$.
         /// \ingroup trait
         template <class T>
-        using alignof_ = meta::size_t<alignof(T)>;
+        using alignof_ = META_TLD::size_t<alignof(T)>;
 
         namespace lazy
         {
             /// \sa `meta::sizeof_`
             /// \ingroup lazy_trait
             template <typename T>
-            using sizeof_ = defer<sizeof_, T>;
+            using sizeof_ = defer<META_TLD::sizeof_, T>;
 
             /// \sa `meta::alignof_`
             /// \ingroup lazy_trait
             template <typename T>
-            using alignof_ = defer<alignof_, T>;
+            using alignof_ = defer<META_TLD::alignof_, T>;
         }
 
         /// A trait that always returns its argument \p T.
@@ -717,7 +719,7 @@ namespace meta
             /// \sa `meta::id`
             /// \ingroup lazy_trait
             template <typename T>
-            using id = defer<id, T>;
+            using id = defer<META_TLD::id, T>;
         }
 
         /// Compose the Alias Classes \p Fs in the parameter pack \p Ts.
@@ -731,14 +733,14 @@ namespace meta
         struct compose<F0>
         {
             template <typename... Ts>
-            using apply = apply<F0, Ts...>;
+            using apply = META_TLD::apply<F0, Ts...>;
         };
 
         template <typename F0, typename... Fs>
         struct compose<F0, Fs...>
         {
             template <typename... Ts>
-            using apply = apply<F0, apply<compose<Fs...>, Ts...>>;
+            using apply = META_TLD::apply<F0, META_TLD::apply<compose<Fs...>, Ts...>>;
         };
 
         namespace lazy
@@ -746,7 +748,7 @@ namespace meta
             /// \sa 'meta::compose'
             /// \ingroup lazy_composition
             template <typename... Fns>
-            using compose = defer<compose, Fns...>;
+            using compose = defer<META_TLD::compose, Fns...>;
         }
 
         /// Turn a class template or alias template \p C into a Alias Class.
@@ -799,7 +801,7 @@ namespace meta
         struct bind_front
         {
             template <typename... Us>
-            using apply = apply<F, Ts..., Us...>;
+            using apply = META_TLD::apply<F, Ts..., Us...>;
         };
 
         /// A Alias Class that partially applies the Alias Class \p F by binding the
@@ -809,7 +811,7 @@ namespace meta
         struct bind_back
         {
             template <typename... Ts>
-            using apply = apply<F, Ts..., Us...>;
+            using apply = META_TLD::apply<F, Ts..., Us...>;
         };
 
         namespace lazy
@@ -817,12 +819,12 @@ namespace meta
             /// \sa 'meta::bind_front'
             /// \ingroup lazy_composition
             template <typename Fn, typename... Ts>
-            using bind_front = defer<bind_front, Fn, Ts...>;
+            using bind_front = defer<META_TLD::bind_front, Fn, Ts...>;
 
             /// \sa 'meta::bind_back'
             /// \ingroup lazy_composition
             template <typename Fn, typename... Ts>
-            using bind_back = defer<bind_back, Fn, Ts...>;
+            using bind_back = defer<META_TLD::bind_back, Fn, Ts...>;
         }
 
         /// Extend meta with your own datatypes.
@@ -862,7 +864,7 @@ namespace meta
         namespace lazy
         {
             template <typename F, typename List>
-            using apply_list = defer<apply_list, F, List>;
+            using apply_list = defer<META_TLD::apply_list, F, List>;
         }
 
         /// A Alias Class that takes a bunch of arguments, bundles them into a type list, and
@@ -882,12 +884,12 @@ namespace meta
             /// \sa 'meta::curry'
             /// \ingroup lazy_composition
             template <typename F, typename Q = quote<list>>
-            using curry = defer<curry, F, Q>;
+            using curry = defer<META_TLD::curry, F, Q>;
 
             /// \sa 'meta::uncurry'
             /// \ingroup lazy_composition
             template <typename F>
-            using uncurry = defer<uncurry, F>;
+            using uncurry = defer<META_TLD::uncurry, F>;
         }
 
         /// A Alias Class that reverses the order of the first two arguments.
@@ -915,7 +917,7 @@ namespace meta
             /// \sa 'meta::flip'
             /// \ingroup lazy_composition
             template <typename F>
-            using flip = defer<flip, F>;
+            using flip = defer<META_TLD::flip, F>;
         }
 
         namespace detail
@@ -928,7 +930,7 @@ namespace meta
             template <typename, typename, typename>
             struct on_helper_;
             template <typename F, typename... Gs, typename... Ts>
-            struct on_helper_<F, meta::list<Gs...>, meta::list<Ts...>>
+            struct on_helper_<F, META_TLD::list<Gs...>, META_TLD::list<Ts...>>
             {
                 using type = apply<F, apply<compose<Gs...>, Ts>...>;
             };
@@ -938,9 +940,9 @@ namespace meta
             {
                 template <typename... Ts>
 #ifdef META_WORKAROUND_MSVC_214588
-                using apply = meta::_t<on_helper_<F, meta::list<Gs...>, meta::list<Ts...>>>;
+                using apply = META_TLD::_t<on_helper_<F, META_TLD::list<Gs...>, META_TLD::list<Ts...>>>;
 #else
-                using apply = apply<F, apply<compose<Gs...>, Ts>...>;
+                using apply = META_TLD::apply<F, META_TLD::apply<compose<Gs...>, Ts>...>;
 #endif
             };
         }
@@ -956,7 +958,7 @@ namespace meta
             /// \sa 'meta::on'
             /// \ingroup lazy_composition
             template <typename F, typename G>
-            using on = defer<on, F, G>;
+            using on = defer<META_TLD::on, F, G>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1001,7 +1003,7 @@ namespace meta
             /// \sa 'meta::if_'
             /// \ingroup lazy_logical
             template <typename... Args>
-            using if_ = defer<if_, Args...>;
+            using if_ = defer<META_TLD::if_, Args...>;
 
             /// \sa 'meta::if_c'
             /// \ingroup lazy_logical
@@ -1150,27 +1152,27 @@ namespace meta
             /// \sa 'meta::and_'
             /// \ingroup lazy_logical
             template <typename... Bools>
-            using and_ = defer<and_, Bools...>;
+            using and_ = defer<META_TLD::and_, Bools...>;
 
             /// \sa 'meta::or_'
             /// \ingroup lazy_logical
             template <typename... Bools>
-            using or_ = defer<or_, Bools...>;
+            using or_ = defer<META_TLD::or_, Bools...>;
 
             /// \sa 'meta::not_'
             /// \ingroup lazy_logical
             template <typename Bool>
-            using not_ = defer<not_, Bool>;
+            using not_ = defer<META_TLD::not_, Bool>;
 
             /// \sa 'meta::fast_and'
             /// \ingroup lazy_logical
             template <typename... Bools>
-            using fast_and = defer<fast_and, Bools...>;
+            using fast_and = defer<META_TLD::fast_and, Bools...>;
 
             /// \sa 'meta::fast_or'
             /// \ingroup lazy_logical
             template <typename... Bools>
-            using fast_or = defer<fast_or, Bools...>;
+            using fast_or = defer<META_TLD::fast_or, Bools...>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1218,12 +1220,12 @@ namespace meta
             /// \sa 'meta::foldl'
             /// \ingroup lazy_transformation
             template <typename List, typename State, typename Fun>
-            using fold = defer<fold, List, State, Fun>;
+            using fold = defer<META_TLD::fold, List, State, Fun>;
 
             /// \sa 'meta::accumulate'
             /// \ingroup lazy_transformation
             template <typename List, typename State, typename Fun>
-            using accumulate = defer<accumulate, List, State, Fun>;
+            using accumulate = defer<META_TLD::accumulate, List, State, Fun>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1265,7 +1267,7 @@ namespace meta
             /// \sa 'meta::foldr'
             /// \ingroup lazy_transformation
             template <typename List, typename State, typename Fun>
-            using reverse_fold = defer<reverse_fold, List, State, Fun>;
+            using reverse_fold = defer<META_TLD::reverse_fold, List, State, Fun>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1273,7 +1275,7 @@ namespace meta
         /// A special value used to indicate no matches. It equals the maximum value representable
         /// by std::size_t.
         /// \ingroup list
-        using npos = meta::size_t<std::size_t(-1)>;
+        using npos = META_TLD::size_t<std::size_t(-1)>;
 
         ///////////////////////////////////////////////////////////////////////////////////////////
         // list
@@ -1299,10 +1301,10 @@ namespace meta
         };
 
         template <typename List>
-        using size = meta::size_t<mysize_helper<List>::value>;
+        using size = META_TLD::size_t<mysize_helper<List>::value>;
 #else
         template <typename List>
-        using size = meta::size_t<List::size()>;
+        using size = META_TLD::size_t<List::size()>;
 #endif
 
         namespace lazy
@@ -1310,7 +1312,7 @@ namespace meta
             /// \sa 'meta::size'
             /// \ingroup lazy_list
             template <typename List>
-            using size = defer<size, List>;
+            using size = defer<META_TLD::size, List>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1368,7 +1370,7 @@ namespace meta
             /// \sa 'meta::concat'
             /// \ingroup lazy_transformation
             template <typename... Lists>
-            using concat = defer<concat, Lists...>;
+            using concat = defer<META_TLD::concat, Lists...>;
         }
 
         /// Joins a list of lists into a single list.
@@ -1386,7 +1388,7 @@ namespace meta
             /// \sa 'meta::join'
             /// \ingroup lazy_transformation
             template <typename ListOfLists>
-            using join = defer<join, ListOfLists>;
+            using join = defer<META_TLD::join, ListOfLists>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1434,7 +1436,7 @@ namespace meta
             /// \sa 'meta::repeat_n'
             /// \ingroup lazy_list
             template <typename N, typename T = void>
-            using repeat_n = defer<repeat_n, N, T>;
+            using repeat_n = defer<META_TLD::repeat_n, N, T>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1485,14 +1487,14 @@ namespace meta
         /// Amortized \f$ O(1) \f$.
         /// \ingroup list
         template <typename List, std::size_t N>
-        using at_c = at<List, meta::size_t<N>>;
+        using at_c = at<List, META_TLD::size_t<N>>;
 
         namespace lazy
         {
             /// \sa 'meta::at'
             /// \ingroup lazy_list
             template <typename List, typename N>
-            using at = defer<at, List, N>;
+            using at = defer<META_TLD::at, List, N>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1549,14 +1551,14 @@ namespace meta
         /// \f$ O(1) \f$.
         /// \ingroup transformation
         template <typename List, std::size_t N>
-        using drop_c = _t<detail::drop_<List, meta::size_t<N>>>;
+        using drop_c = _t<detail::drop_<List, META_TLD::size_t<N>>>;
 
         namespace lazy
         {
             /// \sa 'meta::drop'
             /// \ingroup lazy_transformation
             template <typename List, typename N>
-            using drop = defer<drop, List, N>;
+            using drop = defer<META_TLD::drop, List, N>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1589,7 +1591,7 @@ namespace meta
             /// \sa 'meta::front'
             /// \ingroup lazy_list
             template <typename List>
-            using front = defer<front, List>;
+            using front = defer<META_TLD::front, List>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1622,7 +1624,7 @@ namespace meta
             /// \sa 'meta::back'
             /// \ingroup lazy_list
             template <typename List>
-            using back = defer<back, List>;
+            using back = defer<META_TLD::back, List>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1655,7 +1657,7 @@ namespace meta
             /// \sa 'meta::push_front'
             /// \ingroup lazy_transformation
             template <typename List, typename T>
-            using push_front = defer<push_front, List, T>;
+            using push_front = defer<META_TLD::push_front, List, T>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1688,7 +1690,7 @@ namespace meta
             /// \sa 'meta::pop_front'
             /// \ingroup lazy_transformation
             template <typename List>
-            using pop_front = defer<pop_front, List>;
+            using pop_front = defer<META_TLD::pop_front, List>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1723,7 +1725,7 @@ namespace meta
             /// \sa 'meta::push_back'
             /// \ingroup lazy_transformation
             template <typename List, typename T>
-            using push_back = defer<push_back, List, T>;
+            using push_back = defer<META_TLD::push_back, List, T>;
         }
         /// \cond
         namespace detail
@@ -1751,12 +1753,12 @@ namespace meta
             /// \sa 'meta::min'
             /// \ingroup lazy_math
             template <typename... Ts>
-            using min = defer<min, Ts...>;
+            using min = defer<META_TLD::min, Ts...>;
 
             /// \sa 'meta::max'
             /// \ingroup lazy_math
             template <typename... Ts>
-            using max = defer<max, Ts...>;
+            using max = defer<META_TLD::max, Ts...>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1774,7 +1776,7 @@ namespace meta
             /// \sa 'meta::empty'
             /// \ingroup lazy_list
             template <typename List>
-            using empty = defer<empty, List>;
+            using empty = defer<META_TLD::empty, List>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1799,12 +1801,12 @@ namespace meta
             /// \sa 'meta::first'
             /// \ingroup lazy_list
             template <typename Pair>
-            using first = defer<first, Pair>;
+            using first = defer<META_TLD::first, Pair>;
 
             /// \sa 'meta::second'
             /// \ingroup lazy_list
             template <typename Pair>
-            using second = defer<second, Pair>;
+            using second = defer<META_TLD::second, Pair>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1867,7 +1869,7 @@ namespace meta
             /// \sa 'meta::find_index'
             /// \ingroup lazy_query
             template <typename List, typename T>
-            using find_index = defer<find_index, List, T>;
+            using find_index = defer<META_TLD::find_index, List, T>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1931,7 +1933,7 @@ namespace meta
             /// \sa 'meta::reverse_find_index'
             /// \ingroup lazy_query
             template <typename List, typename T>
-            using reverse_find_index = defer<reverse_find_index, List, T>;
+            using reverse_find_index = defer<META_TLD::reverse_find_index, List, T>;
         }
 
         ////////////////////////////////////////////////////////////////////////////////////
@@ -1977,7 +1979,7 @@ namespace meta
             /// \sa 'meta::find'
             /// \ingroup lazy_query
             template <typename List, typename T>
-            using find = defer<find, List, T>;
+            using find = defer<META_TLD::find, List, T>;
         }
 
         /// Return the tail of the list \p List starting at the last occurrence of \p T, if any such
@@ -1993,7 +1995,7 @@ namespace meta
             /// \sa 'meta::rfind'
             /// \ingroup lazy_query
             template <typename List, typename T>
-            using reverse_find = defer<reverse_find, List, T>;
+            using reverse_find = defer<META_TLD::reverse_find, List, T>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2034,7 +2036,7 @@ namespace meta
             /// \sa 'meta::find_if'
             /// \ingroup lazy_query
             template <typename List, typename Fun>
-            using find_if = defer<find_if, List, Fun>;
+            using find_if = defer<META_TLD::find_if, List, Fun>;
         }
 
         ////////////////////////////////////////////////////////////////////////////////////
@@ -2076,7 +2078,7 @@ namespace meta
             /// \sa 'meta::rfind_if'
             /// \ingroup lazy_query
             template <typename List, typename Fun>
-            using reverse_find_if = defer<reverse_find_if, List, Fun>;
+            using reverse_find_if = defer<META_TLD::reverse_find_if, List, Fun>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2110,7 +2112,7 @@ namespace meta
             /// \sa 'meta::replace'
             /// \ingroup lazy_transformation
             template <typename List, typename T, typename U>
-            using replace = defer<replace, T, U>;
+            using replace = defer<META_TLD::replace, T, U>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2144,7 +2146,7 @@ namespace meta
             /// \sa 'meta::replace_if'
             /// \ingroup lazy_transformation
             template <typename List, typename C, typename U>
-            using replace_if = defer<replace_if, C, U>;
+            using replace_if = defer<META_TLD::replace_if, C, U>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
@@ -2160,14 +2162,14 @@ namespace meta
         /// \f$ O(N) \f$.
         /// \ingroup query
         template <typename List, typename T>
-        using count = fold<List, meta::size_t<0>, bind_back<quote<detail::count_fn>, T>>;
+        using count = fold<List, META_TLD::size_t<0>, bind_back<quote<detail::count_fn>, T>>;
 
         namespace lazy
         {
             /// \sa `meta::count`
             /// \ingroup lazy_query
             template <typename List, typename T>
-            using count = defer<count, List, T>;
+            using count = defer<META_TLD::count, List, T>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////
@@ -2184,14 +2186,14 @@ namespace meta
         /// \f$ O(N) \f$.
         /// \ingroup query
         template <typename List, typename Fn>
-        using count_if = fold<List, meta::size_t<0>, bind_back<quote<detail::count_if_fn>, Fn>>;
+        using count_if = fold<List, META_TLD::size_t<0>, bind_back<quote<detail::count_if_fn>, Fn>>;
 
         namespace lazy
         {
             /// \sa `meta::count_if`
             /// \ingroup lazy_query
             template <typename List, typename Fn>
-            using count_if = defer<count_if, List, Fn>;
+            using count_if = defer<META_TLD::count_if, List, Fn>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2255,7 +2257,7 @@ namespace meta
             /// \sa 'meta::transform'
             /// \ingroup lazy_transformation
             template <typename... Args>
-            using transform = defer<transform, Args...>;
+            using transform = defer<META_TLD::transform, Args...>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2267,7 +2269,7 @@ namespace meta
             struct filter_
             {
                 template <typename State, typename A>
-                using apply = if_<apply<Pred, A>, push_back<State, A>, State>;
+                using apply = if_<META_TLD::apply<Pred, A>, push_back<State, A>, State>;
             };
         } // namespace detail
         /// \endcond
@@ -2286,7 +2288,7 @@ namespace meta
             /// \sa 'meta::filter'
             /// \ingroup lazy_transformation
             template <typename List, typename Pred>
-            using filter = defer<filter, List, Pred>;
+            using filter = defer<META_TLD::filter, List, Pred>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2355,7 +2357,7 @@ namespace meta
             /// \sa 'meta::zip_with'
             /// \ingroup lazy_transformation
             template <typename Fun, typename ListOfLists>
-            using zip_with = defer<zip_with, Fun, ListOfLists>;
+            using zip_with = defer<META_TLD::zip_with, Fun, ListOfLists>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2374,7 +2376,7 @@ namespace meta
             /// \sa 'meta::zip'
             /// \ingroup lazy_transformation
             template <typename ListOfLists>
-            using zip = defer<zip, ListOfLists>;
+            using zip = defer<META_TLD::zip, ListOfLists>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2405,7 +2407,7 @@ namespace meta
             /// \sa 'meta::as_list'
             /// \ingroup lazy_list
             template <typename Sequence>
-            using as_list = defer<as_list, Sequence>;
+            using as_list = defer<META_TLD::as_list, Sequence>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2422,7 +2424,7 @@ namespace meta
             /// \sa 'meta::reverse'
             /// \ingroup lazy_transformation
             template <typename List>
-            using reverse = defer<reverse, List>;
+            using reverse = defer<META_TLD::reverse, List>;
         }
 
         /// Logically negate the result of Alias Class \p F.
@@ -2435,7 +2437,7 @@ namespace meta
             /// \sa 'meta::not_fn'
             /// \ingroup lazy_trait
             template <typename F>
-            using not_fn = defer<not_fn, F>;
+            using not_fn = defer<META_TLD::not_fn, F>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2453,7 +2455,7 @@ namespace meta
             /// \sa 'meta::all_of'
             /// \ingroup lazy_query
             template <typename List, typename Fn>
-            using all_of = defer<all_of, List, Fn>;
+            using all_of = defer<META_TLD::all_of, List, Fn>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2471,7 +2473,7 @@ namespace meta
             /// \sa 'meta::any_of'
             /// \ingroup lazy_query
             template <typename List, typename Fn>
-            using any_of = defer<any_of, List, Fn>;
+            using any_of = defer<META_TLD::any_of, List, Fn>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2489,7 +2491,7 @@ namespace meta
             /// \sa 'meta::none_of'
             /// \ingroup lazy_query
             template <typename List, typename Fn>
-            using none_of = defer<none_of, List, Fn>;
+            using none_of = defer<META_TLD::none_of, List, Fn>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2507,7 +2509,7 @@ namespace meta
             /// \sa 'meta::in'
             /// \ingroup lazy_query
             template <typename List, typename T>
-            using in = defer<in, List, T>;
+            using in = defer<META_TLD::in, List, T>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2561,7 +2563,7 @@ namespace meta
             /// \sa 'meta::unique'
             /// \ingroup lazy_transformation
             template <typename List>
-            using unique = defer<unique, List>;
+            using unique = defer<META_TLD::unique, List>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2623,7 +2625,7 @@ namespace meta
             /// \sa 'meta::partition'
             /// \ingroup lazy_transformation
             template <typename List, typename Pred>
-            using partition = defer<partition, List, Pred>;
+            using partition = defer<META_TLD::partition, List, Pred>;
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////
@@ -2677,7 +2679,7 @@ namespace meta
             /// \sa 'meta::sort'
             /// \ingroup lazy_transformation
             template <typename List, typename Pred>
-            using sort = defer<sort, List, Pred>;
+            using sort = defer<META_TLD::sort, List, Pred>;
         }
 
         ////////////////////////////////////////////////////////////////////////////
@@ -2943,7 +2945,7 @@ namespace meta
 
             public:
                 template <typename... Ts>
-                using apply = apply<thunk, substitutions<Tags, list<Ts...>>>;
+                using apply = META_TLD::apply<thunk, substitutions<Tags, list<Ts...>>>;
             };
         }
         /// \endcond
@@ -3030,7 +3032,7 @@ namespace meta
             /// \sa `meta::let`
             /// \ingroup lazy_trait
             template <typename... As>
-            using let = defer<let, As...>;
+            using let = defer<META_TLD::let, As...>;
         }
 
         // Some argument placeholders for use in \c lambda expressions.
@@ -3090,7 +3092,7 @@ namespace meta
             /// \sa 'meta::cartesian_product'
             /// \ingroup lazy_transformation
             template <typename ListOfLists>
-            using cartesian_product = defer<cartesian_product, ListOfLists>;
+            using cartesian_product = defer<META_TLD::cartesian_product, ListOfLists>;
         }
 
         /// \cond
@@ -3188,7 +3190,7 @@ namespace meta
         /// A user-defined literal that generates objects of type \c meta::size_t.
         /// \ingroup integral
         template <char... Chs>
-        constexpr fold<list<char_<Chs>...>, meta::size_t<0>, quote<detail::atoi_>> operator"" _z()
+        constexpr fold<list<char_<Chs>...>, META_TLD::size_t<0>, quote<detail::atoi_>> operator"" _z()
         {
             return {};
         }
@@ -3204,9 +3206,9 @@ namespace meta
             };
 
             template <class T, T offset, T... Ts>
-            struct offset_integer_sequence_<T, offset, meta::integer_sequence<T, Ts...>>
+            struct offset_integer_sequence_<T, offset, META_TLD::integer_sequence<T, Ts...>>
             {
-                using type = meta::integer_sequence<T, (Ts + offset)...>;
+                using type = META_TLD::integer_sequence<T, (Ts + offset)...>;
             };
         } // namespace detail
         /// \endcond
@@ -3214,8 +3216,8 @@ namespace meta
         /// Makes the integer sequence [from, to).
         /// \ingroup integral
         template <class T, T from, T to>
-        using integer_range = meta::_t<
-            detail::offset_integer_sequence_<T, from, meta::make_integer_sequence<T, to - from>>>;
+        using integer_range = META_TLD::_t<
+            detail::offset_integer_sequence_<T, from, META_TLD::make_integer_sequence<T, to - from>>>;
         /// \cond
     } // namespace v1
     /// \endcond
@@ -3389,6 +3391,8 @@ namespace meta
 
 #endif
 /// \endcond
+
+#undef META_TLD
 
 #if defined(__clang__)
 #pragma GCC diagnostic pop
