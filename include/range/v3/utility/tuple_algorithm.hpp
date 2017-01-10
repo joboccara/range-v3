@@ -171,6 +171,41 @@ namespace ranges
         /// \ingroup group-utility
         /// \sa `make_tuple_fn`
         RANGES_INLINE_VARIABLE(make_tuple_fn, make_tuple)
+
+        struct tuple_any_equal_fn
+        {
+        private:
+            template<typename... Ts, typename... Us, std::size_t Idx,
+                CONCEPT_REQUIRES_(Idx >= sizeof...(Ts))>
+            RANGES_CXX14_CONSTEXPR
+            static bool impl(std::tuple<Ts...> const &, std::tuple<Us...> const &,
+                meta::size_t<Idx>)
+            {
+                return false;
+            }
+            template<typename... Ts, typename... Us, std::size_t Idx,
+                CONCEPT_REQUIRES_(Idx < sizeof...(Ts))>
+            RANGES_CXX14_CONSTEXPR
+            static bool impl(std::tuple<Ts...> const &its, std::tuple<Us...> const &sts,
+                meta::size_t<Idx>)
+            {
+                return std::get<Idx>(its) == std::get<Idx>(sts) ||
+                    impl(its, sts, meta::size_t<Idx + 1>{});
+            }
+        public:
+            template<typename... Ts, typename... Us,
+                CONCEPT_REQUIRES_(meta::strict_and<WeaklyEqualityComparable<Ts, Us>...>::value &&
+                    sizeof...(Ts) == sizeof...(Us))>
+            RANGES_CXX14_CONSTEXPR
+            bool operator()(std::tuple<Ts...> const &its, std::tuple<Us...> const &sts) const
+            {
+                return impl(its, sts, meta::size_t<0>{});
+            }
+        };
+
+        /// \ingroup group-utility
+        /// \sa `tuple_any_equal_fn`
+        RANGES_INLINE_VARIABLE(tuple_any_equal_fn, tuple_any_equal)
         /// @}
     }
 }

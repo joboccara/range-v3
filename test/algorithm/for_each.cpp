@@ -46,5 +46,15 @@ int main()
     CHECK(ranges::for_each(ranges::make_iterator_range(v1.begin(), v1.end()), fun).in().get_unsafe() == v1.end());
     CHECK(sum == 12);
 
+    {
+        int some_ints[] = {0, 1, 2, 3};
+        double some_doubles[] = {3.14159, 1.414, 2.71828};
+        char some_chars[] = {'x', 'y', 'z', 'p', 'd', 'q'};
+
+        ranges::for_each(some_ints, some_doubles, some_chars, [](int i, double d, char c) {
+            std::cout << "int: " << i << ", double: " << d << ", char: " << c << '\n';
+        });
+    }
+
     return ::test_result();
 }
