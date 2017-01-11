@@ -41,16 +41,16 @@ namespace ranges
               : data_(emplaced_index<1>, std::move(t))
             {}
 #ifdef RANGES_WORKAROUND_MSVC_SFINAE_CONSTEXPR
-            template <typename...Args, CONCEPT_REQUIRES_(Constructible<T, Args...>::value)>
+            template <typename...Args, CONCEPT_REQUIRES_(Constructible<T, Args &&...>::value)>
 #else
-            template <typename...Args, CONCEPT_REQUIRES_(Constructible<T, Args...>())>
+            template <typename...Args, CONCEPT_REQUIRES_(Constructible<T, Args &&...>())>
 #endif
             explicit optional(in_place_t, Args &&...args)
               : data_(emplaced_index<1>, std::forward<Args>(args)...)
             {}
             explicit operator bool() const
             {
-                return data_.which() != 0;
+                return data_.index() != 0;
             }
             T & operator*()
             {

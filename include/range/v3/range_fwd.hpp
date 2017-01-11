@@ -53,6 +53,9 @@ namespace ranges
         using adl_begin_end_detail::rend_fn;
         /// \endcond
 
+        template<typename...>
+        struct variant;
+
         template<typename I = void>
         struct dangling;
 
@@ -201,7 +204,7 @@ namespace ranges
             }
 
             template<typename T>
-            constexpr T const & as_const(T & t) noexcept
+            constexpr T const &as_const(T const &t) noexcept
             {
                 return t;
             }
@@ -365,6 +368,12 @@ namespace ranges
 
         template<typename...Ts>
         struct compressed_tuple;
+
+        template<typename T>
+        struct bind_element;
+
+        template<typename T>
+        using bind_element_t = meta::_t<bind_element<T>>;
 
         struct as_function_fn;
 

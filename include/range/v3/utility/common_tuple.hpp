@@ -853,4 +853,39 @@ namespace ranges
     }
 }
 
+RANGES_DIAGNOSTIC_PUSH
+RANGES_DIAGNOSTIC_IGNORE_MISMATCHED_TAGS
+
+namespace std
+{
+    template<typename First, typename Second>
+    struct tuple_size< ::ranges::v3::common_pair<First, Second>>
+      : std::integral_constant<size_t, 2>
+    {};
+
+    template<typename First, typename Second>
+    struct tuple_element<0, ::ranges::v3::common_pair<First, Second>>
+    {
+        using type = First;
+    };
+
+    template<typename First, typename Second>
+    struct tuple_element<1, ::ranges::v3::common_pair<First, Second>>
+    {
+        using type = Second;
+    };
+
+    template<typename... Ts>
+    struct tuple_size< ::ranges::v3::common_tuple<Ts...>>
+      : std::integral_constant<size_t, sizeof...(Ts)>
+    {};
+
+    template<size_t N, typename... Ts>
+    struct tuple_element<N, ::ranges::v3::common_tuple<Ts...>>
+      : tuple_element<N, tuple<Ts...>>
+    {};
+}
+
+RANGES_DIAGNOSTIC_POP
+
 #endif
